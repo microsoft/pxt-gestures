@@ -1,31 +1,14 @@
-/// <reference path="../../../built/pxtlib.d.ts"/>
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as data from "./../data";
-import * as sui from "./../sui";
-import * as pkg from "./../package";
-import * as blocks from "./../blocks"
-import * as hidbridge from "./../hidbridge";
-import * as codecard from "./../codecard"
-import Cloud = pxt.Cloud;
 
 import * as Recorder from "./recorder";
 import * as Types from "./types";
-import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
-import { compile_ws } from "./../app";
 import { GraphCard } from "./graphcard";
-import { streamerCode } from "./streamer";
 
 const JSZip = require("jszip");
 const FileSaver = require("file-saver");
-
-type ISettingsProps = pxt.editor.ISettingsProps;
-type IAppProps = pxt.editor.IAppProps;
-type IAppState = pxt.editor.IAppState;
-type IProjectView = pxt.editor.IProjectView;
 
 export const gesturesContainerID: string = "gestures-container";
 

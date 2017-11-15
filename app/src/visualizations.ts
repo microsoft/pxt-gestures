@@ -1,18 +1,15 @@
-import { Point, Vector, Match } from './types';
-import * as Recorder from './recorder';
-import * as GestureUI from './gesture';
-import * as Model from './model';
+import { Match } from './types';
 
 export const d3 = require('d3');
 
 export class RealTimeGraph {
     // TODO: merge different line types into functions (instead of repeating them inside each function)
-    private graphDiv: any;
-    private graphSvg: any;
+    // private graphDiv: any;
+    // private graphSvg: any;
 
     private dx: number;
     private maxVal: number;
-    private width: number;
+    // private width: number;
     private height: number;
 
     private initialized: boolean = false;
@@ -28,7 +25,7 @@ export class RealTimeGraph {
     constructor(svg: any, width: number, height: number, maxVal: number, dx: number, color: string) {
         this.dx = dx;
         this.maxVal = maxVal;
-        this.width = width;
+        // this.width = width;
         this.height = height;
 
         let y = d3.scaleLinear()
@@ -98,7 +95,7 @@ export class RecognitionOverlay {
     constructor(svg: any, width: number, height: number, dx: number) {
         this.overlaySVG = svg;
         this.dx = dx;
-        this.overlayWidth = width - dx; //because the graph doesn't show the last point! TODO: fix this!
+        this.overlayWidth = width - dx; // because the graph doesn't show the last point! TODO: fix this!
         this.overlayHeight = height * 3 + 15;
         this.activeMatches = [];
         this.activeRectangles = [];
@@ -116,7 +113,7 @@ export class RecognitionOverlay {
         let rect = this.overlaySVG.append("rect")
             .attr("x", this.overlayWidth - width - offsetX)
             .attr("y", 0)
-            .attr("width", width) //TODO: should initialize all of these with the cropStart/End values
+            .attr("width", width) // TODO: should initialize all of these with the cropStart/End values
             .attr("height", this.overlayHeight)
             .attr("fill", "rgba(0, 255, 0, 0.25)");
         
@@ -127,7 +124,7 @@ export class RecognitionOverlay {
 
     public tick(curTick: number) {
         for (let i = 0; i < this.activeMatches.length; i++) {
-            let width = this.activeMatches[i].Te - this.activeMatches[i].Ts;
+            // let width = this.activeMatches[i].Te - this.activeMatches[i].Ts;
 
             if (curTick - this.activeMatches[i].Te >= this.overlayWidth / this.dx) {
                 // remove rectangle from DOM
@@ -136,8 +133,7 @@ export class RecognitionOverlay {
                 this.activeRectangles.splice(i, 1);
                 this.activeMatches.splice(i, 1);
                 this.tickCount.splice(i, 1);
-            }
-            else {
+            } else {
                 let transX = (-this.dx * (++this.tickCount[i])).toString();
                 this.activeRectangles[i].transition().duration(100).attr("transform", "translate(" + transX + ")");
             }

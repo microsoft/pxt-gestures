@@ -17,14 +17,14 @@
         "eofline": false,
         "forin": true,
         "indent": [ true, "spaces" ],
-        "interface-name": [true, "never-prefix"],
+        "interface-name": [false, "never-prefix"],
         "jsdoc-format": true,
         "jsx-no-lambda": false,
         "jsx-no-multiline-js": false,
         "label-position": true,
         "max-line-length": [ false, 120 ],
         "member-ordering": [
-            true,
+            false,
             "public-before-private",
             "static-before-instance",
             "variables-before-functions"
@@ -33,7 +33,7 @@
         "no-arg": true,
         "no-bitwise": false,
         "no-console": [
-            true,
+            false,
             "log",
             "error",
             "debug",
@@ -61,9 +61,9 @@
             "check-open-brace",
             "check-whitespace"
         ],
-        "quotemark": [true, "single", "jsx-double"],
-        "radix": true,
-        "semicolon": [true, "always"],
+        "quotemark": [false, "single", "jsx-double"],
+        "radix": false,
+        "semicolon": [false, "always"],
         "switch-default": true,
 
         "trailing-comma": [false],

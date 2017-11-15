@@ -1,7 +1,5 @@
-import * as Recorder from './recorder';
 import * as Algorithms from './algorithms';
-import { Vector, Match, Gesture, GestureSample } from './types';
-import * as pkg from "./../package";
+import { Vector, Match, GestureSample } from './types';
 
 export class SingleDTWCore {
     private classNumber: number;

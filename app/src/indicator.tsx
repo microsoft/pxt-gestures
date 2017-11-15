@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as hidbridge from "./../hidbridge";
 
 export interface IConnectionIndicator { parent?: any, onConnStatChangeHandler?: (con: boolean) => void, class?: string }
 export interface ConnectionState { connected?: boolean, reconnecting?: boolean }
@@ -12,7 +11,7 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
         this.props = props;
 
         this.attemptTimes = 0;
-        
+
         if (Date.now() - this.props.parent.lastConnectedTime < 2500)
             this.state = { connected: true, reconnecting: false };
         else
@@ -28,7 +27,7 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
                     this.props.onConnStatChangeHandler(false);
                 }
 
-                if(!this.state.reconnecting) {
+                if (!this.state.reconnecting) {
                     // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
                     this.setState({ reconnecting: true });
 
@@ -57,7 +56,7 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
     }
 
     componentDidMount() {
-        
+
     }
 
     componentWillUnmount() {

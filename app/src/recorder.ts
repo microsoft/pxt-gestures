@@ -1,8 +1,5 @@
-import { Vector, GestureSample, Gesture } from './types';
+import { Vector, GestureSample } from './types';
 import * as Viz from './visualizations';
-import * as Webcam from "./webcam";
-import * as Model from "./model";
-import * as GestureUI from "./gesture";
 const MediaStreamRecorder = require("msr");
 
 let nav = navigator as any;
@@ -81,12 +78,10 @@ export class Recorder {
                 mediaRecorder.start(15 * 1000);
 
                 this.recordBtn.classed("green", true);
-            }
-            else if (this.wasRecording == true && this.isRecording == true) {
+            } else if (this.wasRecording == true && this.isRecording == true) {
                 // continue recording
                 this.sample.rawData.push(yt);
-            }
-            else if (this.wasRecording == true && this.isRecording == false) {
+            } else if (this.wasRecording == true && this.isRecording == false) {
                 // stop recording
                 this.sample.endTime = Date.now();
                 this.sample.cropStartIndex = 0;
@@ -129,8 +124,7 @@ export class Recorder {
                 if (e.keyCode == 32)
                     this.isRecording = false;
             };
-        }
-        else if (recordMode == RecordMode.PressToToggle) {
+        } else if (recordMode == RecordMode.PressToToggle) {
             // assign events to capture if recording or not
             window.onkeydown = (e: any) => {
                 // if pressed "space" key
@@ -140,7 +134,7 @@ export class Recorder {
                     this.isRecording = false;
             };
 
-            window.onkeyup = null;
+            window.onkeyup = undefined;
         }
     }
 

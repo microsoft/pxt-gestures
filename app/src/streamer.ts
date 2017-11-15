@@ -1,4 +1,4 @@
-export let streamerCode = `
+export const streamerCode = `
 let sampleRate = 0
 let prevTime = 0
 let time = 0
