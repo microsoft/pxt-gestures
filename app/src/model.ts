@@ -47,12 +47,12 @@ export class SingleDTWCore {
         this.gestureName = gestureName;
     }
 
-  
+
     public UpdateName(newName: string) {
         this.gestureName = newName;
     }
 
-  
+
     public UpdateDescription(newDescription: string) {
         this.description = newDescription;
     }

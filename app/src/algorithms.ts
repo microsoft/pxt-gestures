@@ -1,4 +1,4 @@
-import { Vector, Match, DataType } from './types';
+import { Vector, Match } from './types';
 
 
 export function EuclideanDistance(a: Vector, b: Vector): number {
@@ -52,7 +52,6 @@ export class DTW<SampleType> {
     private Y: SampleType[];
     private eps: number;
     private classNumber: number;
-    private avgProtoLen: number;
 
     private M: number;
 
@@ -80,11 +79,10 @@ export class DTW<SampleType> {
 
 
     constructor(_refPrototype: SampleType[], _threshold: number, _classNum: number, _avgProtoLen: number,
-                _distFun: (a: SampleType, b: SampleType) => number) {
+        _distFun: (a: SampleType, b: SampleType) => number) {
         this.Y = _refPrototype;
         this.eps = _threshold;
         this.classNumber = _classNum;
-        this.avgProtoLen = _avgProtoLen;
 
         this.M = _refPrototype.length;
 
@@ -232,7 +230,6 @@ export class RC4 {
         return this.S[(this.S[this.i] + this.S[this.j]) % 256];
     }
 
-
     // Generate a random number from [ 0, 1 ] uniformally.
     public uniform(): number {
         // Generate 6 bytes.
@@ -244,7 +241,6 @@ export class RC4 {
         return value / 281474976710656;
     }
 
-
     // Generate a random integer from min to max (both inclusive).
     public randint(min: number, max: number): number {
         let value = 0;
@@ -254,7 +250,6 @@ export class RC4 {
         }
         return value % (max - min + 1) + min;
     }
-
 
     // Choose K numbers from 0 to N - 1 randomly.
     // Using Algorithm R by Jeffrey Vitter.
@@ -272,7 +267,6 @@ export class RC4 {
         return chosen;
     }
 }
-
 
 export class DBA<SampleType> {
     /*
@@ -298,7 +292,6 @@ export class DBA<SampleType> {
         this._currentAverage = [];
         this._series = [];
     }
-
 
     // Compute DTW between two series, return [ cost, [ [ i, j ], ... ] ].
     public dynamicTimeWarp(a: SampleType[], b: SampleType[]): [number, [number, number][]] {
@@ -338,7 +331,6 @@ export class DBA<SampleType> {
         return [matrix[a.length][b.length][0], result];
     }
 
-
     // Init the DBA algorithm with series.
     public init(series: SampleType[][]): void {
         this._series = series;
@@ -347,7 +339,6 @@ export class DBA<SampleType> {
         // TODO: Implement better initialization methods, see [1] for more detail.
         this._currentAverage = series[0];
     }
-
 
     // Do one DBA iteration, return the average amount of update (in the distanceFunction).
     // Usually 5-10 iterations is sufficient to get a good average series.
@@ -368,12 +359,10 @@ export class DBA<SampleType> {
             this._distanceFunction(k, this._currentAverage[i])).reduce((a, b) => a + b, 0) / s.length;
     }
 
-
     // Get the current average series.
     public average(): SampleType[] {
         return this._currentAverage;
     }
-
 
     public computeAverage(series: SampleType[][], iterations: number, TOL: number): SampleType[] {
         this.init(series);
@@ -384,15 +373,13 @@ export class DBA<SampleType> {
         return this.average();
     }
 
-
     public computeVariance(series: SampleType[][], center: SampleType[]): number {
-        if (series.length < 3) { return null; }
+        if (series.length < 3) { return 0; }
         const distances = series.map(s => this.dynamicTimeWarp(s, center)[0]);
         let sumsq = 0;
         for (const d of distances) { sumsq += d * d; }
         return Math.sqrt(sumsq / (distances.length - 1));
     }
-
 
     public computeKMeans(
         series: SampleType[][],
@@ -471,8 +458,7 @@ export function roundVecArray(data: Vector[]): Vector[] {
     return roundedVec;
 }
 
-
-export function ComputeVarianceVec(protoArray: Vector[][]): number{
+export function ComputeVarianceVec(protoArray: Vector[][]): number {
     let sum = new Vector(0, 0, 0);
     let sumSquares = new Vector(0, 0, 0);
     let size = 0;
@@ -481,30 +467,29 @@ export function ComputeVarianceVec(protoArray: Vector[][]): number{
         size += protoArray[i].length;
 
         for (let j = 0; j < protoArray[i].length; j++) {
-            sum = new Vector(sum.X + protoArray[i][j].X, 
-                             sum.Y + protoArray[i][j].Y, 
-                             sum.Z + protoArray[i][j].Z);
+            sum = new Vector(sum.X + protoArray[i][j].X,
+                sum.Y + protoArray[i][j].Y,
+                sum.Z + protoArray[i][j].Z);
 
-            sumSquares = new Vector(sumSquares.X + Math.pow(protoArray[i][j].X, 2), 
-                                    sumSquares.Y + Math.pow(protoArray[i][j].Y, 2), 
-                                    sumSquares.Z + Math.pow(protoArray[i][j].Z, 2));
+            sumSquares = new Vector(sumSquares.X + Math.pow(protoArray[i][j].X, 2),
+                sumSquares.Y + Math.pow(protoArray[i][j].Y, 2),
+                sumSquares.Z + Math.pow(protoArray[i][j].Z, 2));
         }
     }
 
     let variance = new Vector(((sumSquares.X - (Math.pow(sum.X, 2) / size)) / size),
-                              ((sumSquares.Y - (Math.pow(sum.Y, 2) / size)) / size),
-                              ((sumSquares.Z - (Math.pow(sum.Z, 2) / size)) / size));
+        ((sumSquares.Y - (Math.pow(sum.Y, 2) / size)) / size),
+        ((sumSquares.Z - (Math.pow(sum.Z, 2) / size)) / size));
 
     return EuclideanDistance(variance, new Vector(0, 0, 0));
 }
 
-
 export function findMinimumThreshold(prototypeArray: Vector[][],
-                                     referencePrototype: Vector[],
-                                     avgLen: number,
-                                     distFun: (a: Vector, b: Vector) => number,
-                                     step: number,
-                                     maxStep: number): number {
+    referencePrototype: Vector[],
+    avgLen: number,
+    distFun: (a: Vector, b: Vector) => number,
+    step: number,
+    maxStep: number): number {
     // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
     let threshold = 0;
     let variance = ComputeVarianceVec(prototypeArray);
@@ -548,7 +533,7 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
         if (predictMatch.length == prototypeArray.length) {
 
             // for (let k = 0; k < testMatch.length; k++) {
-                // check if te and ts are matching (e.g. pretty close!) as well
+            // check if te and ts are matching (e.g. pretty close!) as well
             // }
 
             condition = false;
@@ -564,14 +549,13 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
     return threshold;
 }
 
-
 export class MultiDTW<SampleType> {
     private cores: DTW<SampleType>[];
     private activeCores: boolean[];
     private thresholds: number[];
 
     private activeCoresCount: number;
-    
+
     private timer: number;
     private waitTime: number;
     private predictionsArray: Match[];
@@ -579,7 +563,7 @@ export class MultiDTW<SampleType> {
     private bestDist: number;
 
     constructor(_refPrototypes: SampleType[][], _thresholds: number[], _avgProtoLengths: number[],
-                _distFun: (a: SampleType, b: SampleType) => number) {
+        _distFun: (a: SampleType, b: SampleType) => number) {
         this.predictionsArray = [];
         this.cores = [];
         this.activeCores = [];
@@ -592,8 +576,8 @@ export class MultiDTW<SampleType> {
         let maxLen = -999;
 
         for (let i = 0; i < _refPrototypes.length; i++) {
-             this.cores.push(new DTW<SampleType>(_refPrototypes[i], _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
-             this.activeCores.push(false);
+            this.cores.push(new DTW<SampleType>(_refPrototypes[i], _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
+            this.activeCores.push(false);
 
             if (minLen > _avgProtoLengths[i]) minLen = _avgProtoLengths[i];
             if (maxLen < _avgProtoLengths[i]) maxLen = _avgProtoLengths[i];
@@ -618,7 +602,7 @@ export class MultiDTW<SampleType> {
         for (let i = 0; i < this.cores.length; i++) {
             if (this.activeCores[i]) {
                 let m = this.cores[i].Feed(xt);
-                
+
                 if (m.classNum != 0) {
                     // we have a report:
                     // add to predictions array
@@ -642,14 +626,13 @@ export class MultiDTW<SampleType> {
                             this.bestMatch = m;
                             this.bestDist = m.minDist / this.thresholds[i];
                             this.timer = this.waitTime;
-                        }
-                        else {
+                        } else {
                             // the predictionArray is non-empty! and we might find a better match with the addition of this new match
                             let isUpdated = false;
 
                             let curDist = m.minDist / this.thresholds[i];
 
-                            if ( curDist < this.bestDist ) {
+                            if (curDist < this.bestDist) {
                                 this.bestDist = curDist;
                                 this.bestMatch = m;
 
@@ -665,8 +648,7 @@ export class MultiDTW<SampleType> {
                                 this.cores.forEach(core => {
                                     core.Reset();
                                 });
-                            }
-                            else if (isUpdated) {
+                            } else if (isUpdated) {
                                 // update timer (this could only happen when we have 3 or more gestures)
                                 this.timer = this.waitTime;
                             }
