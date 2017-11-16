@@ -15,7 +15,7 @@ loops.forever(function () {
         y = input.acceleration(Dimension.Y)
         z = input.acceleration(Dimension.Z)
         spring.Feed(new Vector(x, y, z));
-serial.writeLine("A " + x + " " + y + " " + z)
+        serial.writeLine("A " + x + " " + y + " " + z)
         loops.pause(40)
     }
 })
@@ -24,77 +24,77 @@ let infinityPrototype: Vector[];
 infinityPrototype = []
 infinityPrototype = [
     new Vector(200, 128, -612)
-                            , 
+    ,
     new Vector(240, 184, -652)
-                            , 
+    ,
     new Vector(634, 406, -627)
-                            , 
+    ,
     new Vector(1379, 698, -669)
-                            , 
+    ,
     new Vector(2028, 972, -76)
-                            , 
+    ,
     new Vector(2036, 916, 236)
-                            , 
+    ,
     new Vector(2036, 840, 492)
-                            , 
+    ,
     new Vector(1955, 717, 627)
-                            , 
+    ,
     new Vector(1292, 532, 500)
-                            , 
+    ,
     new Vector(1144, 444, 476)
-                            , 
+    ,
     new Vector(980, 380, 604)
-                            , 
+    ,
     new Vector(659, 272, 448)
-                            , 
+    ,
     new Vector(284, 228, 424)
-                            , 
+    ,
     new Vector(36, 200, 380)
-                            , 
+    ,
     new Vector(-262, 150, 285)
-                            , 
+    ,
     new Vector(-232, 180, 148)
-                            , 
+    ,
     new Vector(-172, 272, 68)
-                            , 
+    ,
     new Vector(384, 364, -56)
-                            , 
+    ,
     new Vector(1244, 460, -348)
-                            , 
+    ,
     new Vector(1904, 464, -595)
-                            , 
+    ,
     new Vector(2042, 736, -1328)
-                            , 
+    ,
     new Vector(2036, 644, -1580)
-                            , 
+    ,
     new Vector(1644, 620, -1664)
-                            , 
+    ,
     new Vector(1192, 448, -1608)
-                            , 
+    ,
     new Vector(744, 320, -1488)
-                            , 
+    ,
     new Vector(524, 244, -1256)
-                            , 
+    ,
     new Vector(211, 102, -922)
-                            , 
+    ,
     new Vector(-36, -28, -536)
-                            , 
+    ,
     new Vector(-240, -76, -392)
-                            , 
+    ,
     new Vector(-312, -160, -144)
-                            , 
+    ,
     new Vector(-376, -156, -48)
-                            , 
+    ,
     new Vector(-316, -32, 88)
-                            , 
+    ,
     new Vector(136, 72, -36)
-                            , 
+    ,
     new Vector(1260, 68, 424)
-                            , 
+    ,
     new Vector(2013, 93, 742)
-                            , 
+    ,
     new Vector(1875, 333, 266)
-                            ]
+]
 time = 0
 prevTime = 0
 // the trained reference prototype for making an
