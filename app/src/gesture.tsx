@@ -92,7 +92,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                 case "console":
                     const cons = ev as pxt.editor.ConsoleEvent;
                     // drop sim
-                    if (cons.body.sim) return;                    
+                    if (cons.body.sim) return;
                     this.onSerialData(cons.body.data);
                     break;
                 default:
@@ -158,7 +158,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
 
-        if (this.state.editGestureMode)
+        if (this.state.editGestureMode && this.recorder)
             this.recorder.PauseWebcam();
 
         this.deleteIfGestureEmpty();
@@ -182,7 +182,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                 this.graphY.update(newData.accVec.Y);
                 this.graphZ.update(newData.accVec.Z);
 
-                this.recorder.Feed(newData.accVec);
+                if (this.recorder)
+                    this.recorder.Feed(newData.accVec);
 
                 if (this.models[this.curGestureIndex].isRunning()) {
                     let match = this.models[this.curGestureIndex].Feed(newData.accVec);
@@ -194,6 +195,9 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                 }
             }
         }
+
+        if (!this.state.connected)
+            this.setState({ connected: true });
     }
 
     /**
@@ -283,7 +287,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
-            this.recorder.PauseWebcam();
+            if (this.recorder)
+                this.recorder.PauseWebcam();
             this.deleteIfGestureEmpty();
         }
 
@@ -431,11 +436,13 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
 
             switch (element.value) {
                 case "PressAndHold":
-                    this.recorder.SetRecordingMethod(Recorder.RecordMode.PressAndHold);
+                    if (this.recorder)
+                        this.recorder.SetRecordingMethod(Recorder.RecordMode.PressAndHold);
                     break;
 
                 case "PressToToggle":
-                    this.recorder.SetRecordingMethod(Recorder.RecordMode.PressToToggle);
+                    if (this.recorder)
+                        this.recorder.SetRecordingMethod(Recorder.RecordMode.PressToToggle);
                     break;
                 default: break;
             }
@@ -565,7 +572,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                 <div className="ui message">
                                                     <div className="content">
                                                         <div className="header">
-                                                            Steps to Program Streamer
+                                                            Steps to Download Streamer
                                             </div>
                                                         <ul className="list">
                                                             <li>Make sure that the Circuit Playground Express is connected to your computer</li>
@@ -575,7 +582,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                         <br />
                                                         <a id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" href="/streamer.uf2">
                                                             <i className="download icon icon-and-text"></i>
-                                                            <span className="ui text">Program Streamer</span>
+                                                            <span className="ui text">Download Streamer</span>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -609,7 +616,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                     <div className="ui segments" id="display-gesture">
                                         <div className="ui segment inverted teal" style={headerStyle}>
                                             <div className="ui action input left floated">
-                                                <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => { this.recorder.PauseEventListeners(); }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameGesture} />
+                                                <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => { this.recorder ? this.recorder.PauseEventListeners() : undefined; }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameGesture} />
                                                 <button className="ui icon button compact tiny" style={buttonHeightStyle}>
                                                     <i className="save icon" />
                                                 </button>
