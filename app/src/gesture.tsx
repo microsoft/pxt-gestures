@@ -548,9 +548,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                         :
                         <span className="ui header left floated">{"Gesture Toolbox"}</span>
                     }
-                    <button className="ui button icon huge clear" id="clear-btn" onClick={() => this.hide()}>
-                        <i className="icon close large"></i>
-                    </button>
                     {
                         this.state.connected ?
                             <div className="ui basic label green" id="indicator">
@@ -598,7 +595,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                         </div>
                                                         <div className="ui segment">
                                                             <div className="ui grid">
-                                                                <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay loop></video>
+                                                                <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay={true} loop={true}></video>
                                                                 <GraphCard
                                                                     key={gesture.gestureID}
                                                                     editable={false}
