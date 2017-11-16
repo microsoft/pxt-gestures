@@ -8,6 +8,7 @@ import * as Types from "./types";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
 import { GraphCard } from "./graphcard";
+import { Gesture } from "./types";
 
 export const gesturesContainerID: string = "gestures-container";
 
@@ -111,6 +112,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                 break;
             case "extreadcode":
                 // received existing code
+                const usercode = data as pxt.editor.ReadCodeResponse;
+                this.loadBlocks(usercode.resp.code, usercode.resp.json);
                 break;
             default: break;
         }
@@ -125,15 +128,82 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
      * will generate the code blocks for each running DTW model and will rewrite 
      * the contents of the custom.ts file with 
      */
-    generateBlocks() {
-        const codeBlocks: string[] = [];
-        for (let i = 0; i < this.models.length; i++) {
-            if (this.models[i].isRunning())
-                codeBlocks.push(this.models[i].GenerateBlock());
-        }
+    saveBlocks() {
+        const codeBlocks: string[] = this.models
+            .filter(m => m.isRunning())
+            .map(m => m.GenerateBlock());
         const code = Model.SingleDTWCore.GenerateNamespace(codeBlocks);
-        this.sendRequest("extwritecode", { code })
+        const json = JSON.stringify(this.state.data, null, 2);
+        this.sendRequest("extwritecode", { code, json });
         this.hasBeenModified = false;
+    }
+
+    loadBlocks(code: string, json: string) {
+        if (!json) return;
+
+        let gestures: Gesture[] = JSON.parse(json);
+        if (!gestures) return;
+
+        let cloneData = []; // this.state.data.slice();
+        this.models = [];
+
+        gestures.forEach(importedGesture => {
+            let parsedGesture = new Gesture();
+            parsedGesture.description = importedGesture.description;
+            parsedGesture.name = importedGesture.name;
+            parsedGesture.labelNumber = importedGesture.labelNumber;
+            for (let j = 0; j < importedGesture.gestures.length; j++) {
+                parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
+            }
+            parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+            cloneData.push(parsedGesture);
+            let curIndex = cloneData.length - 1;
+            let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
+            newModel.Update(cloneData[curIndex].getCroppedData());
+            this.models.push(newModel);
+        })
+        this.setState({ data: cloneData });
+    }
+    
+    /*
+    +                                parsedGesture.description = importedGesture.description;
+    +                                parsedGesture.name = importedGesture.name;
+    +                                parsedGesture.labelNumber = importedGesture.labelNumber;
+    +
+    +                                for (let j = 0; j < importedGesture.gestures.length; j++) {
+    +                                    parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
+    +                                }
+    +                                
+    +                                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+    +                                
+    +                                let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
+    +                                newModel.Update(cloneData[curIndex].getCroppedData());
+    +                                this.models.push(newModel);
+    +
+    +                                this.setState({ data: cloneData });
+    +                                this.hasBeenModified = true;        
+    */
+
+    /**
+     * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
+     * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
+     */
+    parseJSONGesture(importedSample: any): Types.GestureSample {
+        let sample = new Types.GestureSample();
+
+        for (let k = 0; k < importedSample.rawData.length; k++) {
+            let vec = importedSample.rawData[k];
+            sample.rawData.push(new Types.Vector(vec.X, vec.Y, vec.Z));
+        }
+
+        sample.videoLink = importedSample.videoLink;
+        sample.videoData = importedSample.videoData;
+        sample.startTime = importedSample.startTime;
+        sample.endTime = importedSample.endTime;
+        sample.cropStartIndex = importedSample.cropStartIndex;
+        sample.cropEndIndex = importedSample.cropEndIndex;
+
+        return sample;
     }
 
     /**
@@ -153,7 +223,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     hide() {
         // generates the blocks and reloads the workspace to make them available instantly 
         // though it will not reload if there were no changes to any of the gestures
-        if (this.hasBeenModified) this.generateBlocks();
+        if (this.hasBeenModified) this.saveBlocks();
 
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
@@ -233,28 +303,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     }
 
     /**
-     * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
-     * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
-     */
-    parseJSONGesture(importedSample: any): Types.GestureSample {
-        let sample = new Types.GestureSample();
-
-        for (let k = 0; k < importedSample.rawData.length; k++) {
-            let vec = importedSample.rawData[k];
-            sample.rawData.push(new Types.Vector(vec.X, vec.Y, vec.Z));
-        }
-
-        sample.videoLink = importedSample.videoLink;
-        sample.videoData = importedSample.videoData;
-        sample.startTime = importedSample.startTime;
-        sample.endTime = importedSample.endTime;
-        sample.cropStartIndex = importedSample.cropStartIndex;
-        sample.cropEndIndex = importedSample.cropEndIndex;
-
-        return sample;
-    }
-
-    /**
      * Updates the scrollbar's horizontal position based on the width of the DisplayGesture on the left.
      * This function will make sure that the scrollbar would not get wider than the GestureToolbox container
      */
@@ -285,7 +333,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             // update name
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
             // update blocks if was touched
-            if (this.hasBeenModified) this.generateBlocks();
+            if (this.hasBeenModified) this.saveBlocks();
             this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
