@@ -266,8 +266,12 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
 
         // resize the scrollbar based on the window size:
-        let totalWidth = document.getElementById("recorded-gestures").offsetWidth;
-        let dispGestureWidth = document.getElementById("display-gesture").offsetWidth;
+        const recordedGestures = document.getElementById("recorded-gestures");
+        if (!recordedGestures) return;
+        let totalWidth = recordedGestures.offsetWidth;
+        const displayGestures = document.getElementById("display-gesture");
+        if (!displayGestures) return;
+        let dispGestureWidth = displayGestures.offsetWidth;
         let samplesContainerWidth = totalWidth - dispGestureWidth - 40;
 
         scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
