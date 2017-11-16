@@ -1,11 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import App from './App';
-import registerServiceWorker from './registerServiceWorker';
+import * as gesture from "./gesture"
 import './index.css';
 
 ReactDOM.render(
-  <App />,
+  <gesture.GestureToolbox />,
   document.getElementById('root') as HTMLElement
 );
-registerServiceWorker();
