@@ -166,7 +166,7 @@ ${generatedCodeBlocks.join('\n')}
                 const y = input.acceleration(Dimension.Y);
                 const z = input.acceleration(Dimension.Z);
 
-                if (spring.Feed(new Vector(x, y, z)) == 1)
+                if (spring.feed({ X: x, Y: y, Z: z }) == 1)
                     control.raiseEvent(${event_src_id_varName}, 1);
 
                 loops.pause(40);    //almost 25fps

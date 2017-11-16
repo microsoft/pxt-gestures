@@ -100,7 +100,7 @@ namespace Gestures {
         }
 
 
-        public Feed(xt: Vector) {
+        public feed(xt: Vector): number {
             let predicted = 0;
 
             let t = this.t + 1;
