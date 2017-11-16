@@ -6,16 +6,27 @@
 The root folder contains the pxt package that gets loaded in the MakeCode editor.
 The ``app`` folder contains the React App that gets loaded in the editor IFrame and interacts with the editor.
 
-## Building the package
-
-Follow the PXT package development instructions.
-
 ## Building the app
 
 * go to ``app``
 * run ``npm install``
 * run ``npm run test`` for local dev
 * run ``npm run deploy`` for deployment to github pages
+
+## Building the package
+
+* Setup a local MakeCode development for  your target (e.g. pxt-adafruit)
+* Clone this repo under ``/projects``
+* Launch the local server
+* Create a new project and edit manually the ``pxt.json`` to add
+
+```
+   dependencies: {
+       "pxt-gestures": "file:../pxt-gestures",
+       ...
+   }
+```
+* reload project and your package should be loaded
 
 ## Contributing
 
