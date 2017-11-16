@@ -2,6 +2,7 @@
   "name": "app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/pxt-gestures",
   "dependencies": {
     "@types/d3": "^4.11.1",
     "@types/jquery": "^3.2.16",
