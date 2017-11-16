@@ -89,7 +89,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         const ev = data as pxt.editor.ExtensionEvent;
         if (ev.event) {
             switch (ev.event) {
-                case "console":
+                case "extconsole":
                     const cons = ev as pxt.editor.ConsoleEvent;
                     // drop sim
                     if (cons.body.sim) return;
