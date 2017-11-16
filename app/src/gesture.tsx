@@ -176,23 +176,21 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     onSerialData(strBuf: string) {
         const newData = Recorder.parseString(strBuf);
 
-        if (newData && this.state.editGestureMode) {
-            if (newData.acc && this.graphZ.isInitialized()) {
-                this.graphX.update(newData.accVec.X);
-                this.graphY.update(newData.accVec.Y);
-                this.graphZ.update(newData.accVec.Z);
+        if (newData && newData.acc && this.state.editGestureMode && this.graphZ && this.graphZ.isInitialized()) {
+            this.graphX.update(newData.accVec.X);
+            this.graphY.update(newData.accVec.Y);
+            this.graphZ.update(newData.accVec.Z);
 
-                if (this.recorder)
-                    this.recorder.Feed(newData.accVec);
+            if (this.recorder)
+                this.recorder.Feed(newData.accVec);
 
-                if (this.models[this.curGestureIndex].isRunning()) {
-                    let match = this.models[this.curGestureIndex].Feed(newData.accVec);
-                    if (match.classNum != 0) {
-                        // a gesture has been recognized - create the green rectangle overlay on the realtime graph
-                        this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
-                    }
-                    this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
+            if (this.models[this.curGestureIndex].isRunning()) {
+                let match = this.models[this.curGestureIndex].Feed(newData.accVec);
+                if (match.classNum != 0) {
+                    // a gesture has been recognized - create the green rectangle overlay on the realtime graph
+                    this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
                 }
+                this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
             }
         }
 

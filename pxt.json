@@ -5,7 +5,9 @@
     "dependencies": {
         "core": "*"
     },
-    "files": [],
+    "files": [
+        "gestures.ts"
+    ],
     "extension": {
         "namespace": "input",
         "label": "Gesture Editor",
