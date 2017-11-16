@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/d3": "^4.11.1",
+    "@types/jquery": "^3.2.16",
     "msr": "^1.3.4",
     "react": "^16.1.1",
     "react-dom": "^16.1.1",

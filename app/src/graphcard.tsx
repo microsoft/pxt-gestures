@@ -1,3 +1,5 @@
+/// <reference path="../node_modules/@types/d3/index.d.ts"/>
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -263,8 +265,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     }
 
     render() {
-        let headerStyle = { height: "60px" };
-        let clipperStyle = { overflow: "hidden" };
+        const headerStyle = { height: "60px" };
 
         return (
             <div className="ui segments sample-graph" style={this.props.style}>
@@ -275,7 +276,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                                 this.state.editMode == true
                                     ?
                                     <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
-                                        <i className="checkmark icon"/>
+                                        <i className="checkmark icon" />
                                     </button>
                                     :
                                     <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
@@ -289,14 +290,12 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                         </div>
                 }
                 <div ref="graphContainer" className="ui segment graph-container">
-                    {
-                        <div style={clipperStyle}>
-                            <svg ref="svgX"/>
-                            <svg ref="svgY"/>
-                            <svg ref="svgZ"/>
-                            <svg ref="svgCrop"/>
-                        </div>
-                    }
+                    {<div style={{ overflow: "hidden" }}>
+                        <svg ref="svgX" />
+                        <svg ref="svgY" />
+                        <svg ref="svgZ" />
+                        <svg ref="svgCrop" />
+                    </div>}
                 </div>
             </div>
         );
