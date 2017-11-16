@@ -231,7 +231,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         scrollBarDiv.style.width = samplesContainerWidth.toString() + "px";
     }
 
-    renderCore() {
+    render() {
         /**
          * returns from the editGesture window to the main window and 
          * generates the gesture blocks if they have been modified
