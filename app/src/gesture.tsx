@@ -51,7 +51,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             visible: false,
             editGestureMode: false,
             data: data,
-            connected: true
+            connected: false
         };
 
         this.mainViewGesturesGraphsKey = 999;
@@ -523,10 +523,10 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                             <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
                                                         </ul>
                                                         <br />
-                                                        <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" onClick={uploadStreamerCode}>
+                                                        <a id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" href="/streamer.uf2">
                                                             <i className="download icon icon-and-text"></i>
                                                             <span className="ui text">Program Streamer</span>
-                                                        </button>
+                                                        </a>
                                                     </div>
                                                 </div>
 
