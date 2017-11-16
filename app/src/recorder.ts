@@ -134,13 +134,13 @@ export class Recorder {
                     this.isRecording = false;
             };
 
-            window.onkeyup = undefined;
+            delete window.onkeyup;
         }
     }
 
     public PauseEventListeners() {
-        window.onkeydown = null;
-        window.onkeyup = null;
+        delete window.onkeydown;
+        delete window.onkeyup;
     }
 
     public ResumeEventListeners() {
