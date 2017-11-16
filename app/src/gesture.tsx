@@ -176,7 +176,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     onSerialData(strBuf: string) {
         const newData = Recorder.parseString(strBuf);
 
-        if (this.state.editGestureMode && this.state.connected) {
+        if (newData && this.state.editGestureMode) {
             if (newData.acc && this.graphZ.isInitialized()) {
                 this.graphX.update(newData.accVec.X);
                 this.graphY.update(newData.accVec.Y);
@@ -472,15 +472,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             this.setState({ data: cloneData });
         }
 
-        /**
-         * Uploads the streamer code
-         * TODO: update this to modify main.ts with streamer code, and then upload it to the device
-         * instead of requiring unix cmd copy/paste mechanism of a pre-generated streamer.uf2 file.
-         */
-        const uploadStreamerCode = () => {
-            // TODOX
-        }
-
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const colossalStyle = { fontSize: "3.5rem", margin: "0" };
         const gestureContainerMargin = { margin: "0 15px 15px 0" };
@@ -616,10 +607,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                     <div className="ui segments" id="display-gesture">
                                         <div className="ui segment inverted teal" style={headerStyle}>
                                             <div className="ui action input left floated">
-                                                <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => { this.recorder ? this.recorder.PauseEventListeners() : undefined; }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameGesture} />
-                                                <button className="ui icon button compact tiny" style={buttonHeightStyle}>
-                                                    <i className="save icon" />
-                                                </button>
+                                                <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => { this.recorder ? this.recorder.PauseEventListeners() : undefined; }} onBlur={() => { this.recorder ? this.recorder.ResumeEventListeners() : undefined }} onChange={renameGesture} />
                                             </div>
                                         </div>
                                         <div className="ui segment">
