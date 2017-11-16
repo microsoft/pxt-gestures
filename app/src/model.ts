@@ -156,10 +156,8 @@ ${generatedCodeBlocks.join('\n')}
         control.runInBackground(() => {
             const threshold = ${this.threshold};
             const avgLength = ${this.avgLength};
-
             const refPrototype = ${this.vecArrayToString(this.refPrototype)};
-
-            const spring = new SpringAlgorithm(refPrototype, threshold, avgLength, EuclideanDistanceFast);
+            const spring = new SpringAlgorithm(refPrototype, threshold, avgLength);
 
             while (true) {
                 const x = input.acceleration(Dimension.X);

@@ -8,11 +8,6 @@ namespace Gestures {
         Y: number;
         Z: number;
     }
-    
-    function EuclideanDistanceFast(a: Vector, b: Vector): number {
-        // L2 Norm:
-        return IntegerSqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) + (a.Z - b.Z) * (a.Z - b.Z));
-    }
 
     function IntegerSqrt(n: number): number {
         if (n < 0) return -1;
@@ -43,7 +38,9 @@ namespace Gestures {
     }
 
     export class SpringAlgorithm {
-        private distFunction: (a: Vector, b: Vector) => number;
+        private distFunction(a: Vector, b: Vector): number {
+            return IntegerSqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) + (a.Z - b.Z) * (a.Z - b.Z));
+        }
 
         private Y: Vector[];
         private eps: number;
@@ -66,10 +63,9 @@ namespace Gestures {
         private report: (dmin: number, ts: number, te: number) => void;
 
 
-        constructor(_input: Vector[], _epsilon: number, avgLen: number, _distFun: (a: Vector, b: Vector) => number) {
+        constructor(_input: Vector[], _epsilon: number, avgLen: number) {
             this.Y = _input;
             this.eps = _epsilon;
-            this.distFunction = _distFun;
 
             this.M = _input.length;
 
