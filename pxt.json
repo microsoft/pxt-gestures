@@ -4,7 +4,8 @@
     "public": true,
     "dependencies": {
         "core": "*"
-    },    
+    },
+    "files": [],
     "extension": {
         "namespace": "input",
         "label": "Gesture Editor",

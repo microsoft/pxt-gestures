@@ -1,3 +1,5 @@
+/// <reference path="../node_modules/pxt-core/built/pxteditor.d.ts"/>
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -25,6 +27,8 @@ export interface IGestureSettingsProps {
 }
 
 export class GestureToolbox extends React.Component<IGestureSettingsProps, GestureToolboxState> {
+    private extId: string;
+    private idToType: pxt.Map<string>;
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
@@ -46,6 +50,9 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         super(props);
 
         let data: Types.Gesture[] = [];
+        this.extId = window.location.hash.substr(1);
+        console.log(`extension id: ${this.extId}`)
+        this.idToType = {};
 
         this.state = {
             visible: false,
@@ -64,20 +71,68 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         this.hasBeenModified = false;
     }
 
+    sendRequest(action: string, body?: any) {
+        const id = Math.random().toString();
+        this.idToType[id] = action;
+        const msg = {
+            type: "pxtpkgext",
+            action: action,
+            extId: this.extId,
+            response: true,
+            id: id,
+            body
+        };
+        if (window.parent && window != window.parent) window.parent.postMessage(msg, "*");
+    }
+
+    receiveMessage(data: pxt.editor.ExtensionMessage) {
+        const ev = data as pxt.editor.ExtensionEvent;
+        if (ev.event) {
+            switch (ev.event) {
+                case "console":
+                    const cons = ev as pxt.editor.ConsoleEvent;
+                    // drop sim
+                    if (cons.body.sim) return;                    
+                    this.onSerialData(cons.body.data);
+                    break;
+                default:
+                    break;
+            }
+            return;
+        }
+
+        const action = this.idToType[data.id];
+        console.log(`msg: ${action}`)
+        delete this.idToType[data.id];
+        switch (action) {
+            case "extinit":
+                this.sendRequest("extreadcode");
+                this.sendRequest("extdatastream");
+                break;
+            case "extreadcode":
+                // received existing code
+                break;
+            default: break;
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener("message", ev => ev.data.type == "pxtpkgext" ? this.receiveMessage(ev.data) : undefined, false);
+        this.sendRequest("extinit");
+    }
+
     /**
      * will generate the code blocks for each running DTW model and will rewrite 
      * the contents of the custom.ts file with 
      */
     generateBlocks() {
-        let codeBlocks: string[] = [];
-
+        const codeBlocks: string[] = [];
         for (let i = 0; i < this.models.length; i++) {
             if (this.models[i].isRunning())
                 codeBlocks.push(this.models[i].GenerateBlock());
         }
-
-        // TODOX: send code back to editor this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
-
+        const code = Model.SingleDTWCore.GenerateNamespace(codeBlocks);
+        this.sendRequest("extwritecode", { code })
         this.hasBeenModified = false;
     }
 
@@ -118,32 +173,27 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
      * Initializes the serial port (using hid for the Circuit Playground) and sets the onSerialData event function
      * to update the realtime graph, feed the recorder, and feed the realtime DTW model (if it is running)
      */
-    connectToDevice() {
-        const onSerialData = (buf: any, isErr: any) => {
-            let strBuf: string = ""// TODOX //Util.fromUTF8(Util.uint8ArrayToString(buf));
-            let newData = Recorder.parseString(strBuf);
+    onSerialData(strBuf: string) {
+        const newData = Recorder.parseString(strBuf);
 
-            if (this.state.editGestureMode && this.state.connected) {
-                if (newData.acc && this.graphZ.isInitialized()) {
-                    this.graphX.update(newData.accVec.X);
-                    this.graphY.update(newData.accVec.Y);
-                    this.graphZ.update(newData.accVec.Z);
+        if (this.state.editGestureMode && this.state.connected) {
+            if (newData.acc && this.graphZ.isInitialized()) {
+                this.graphX.update(newData.accVec.X);
+                this.graphY.update(newData.accVec.Y);
+                this.graphZ.update(newData.accVec.Z);
 
-                    this.recorder.Feed(newData.accVec);
+                this.recorder.Feed(newData.accVec);
 
-                    if (this.models[this.curGestureIndex].isRunning()) {
-                        let match = this.models[this.curGestureIndex].Feed(newData.accVec);
-                        if (match.classNum != 0) {
-                            // a gesture has been recognized - create the green rectangle overlay on the realtime graph
-                            this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
-                        }
-                        this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
+                if (this.models[this.curGestureIndex].isRunning()) {
+                    let match = this.models[this.curGestureIndex].Feed(newData.accVec);
+                    if (match.classNum != 0) {
+                        // a gesture has been recognized - create the green rectangle overlay on the realtime graph
+                        this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
                     }
+                    this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
                 }
             }
-        };
-
-        // TODOX: hook to serial dat
+        }
     }
 
     /**

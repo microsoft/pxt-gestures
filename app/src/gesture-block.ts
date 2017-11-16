@@ -1,4 +1,4 @@
-export let multiGesture_v0 = `
+export const multiGesture_v0 = `
 enum GestureName {
     //% block="Gesture1"
     Gesture1 = 1,
@@ -61,7 +61,7 @@ namespace Gesture {
 
 
 
-export let singleGestureBlock_v1 = `
+export const singleGestureBlock_v1 = `
 /**
  * Gesture blocks
  */
@@ -287,7 +287,7 @@ class SpringAlgorithm {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-export let multiGesture_v1 = `
+export const multiGesture_v1 = `
 enum GestureName {
     //% block="Gesture1"
     Gesture1 = 1,
