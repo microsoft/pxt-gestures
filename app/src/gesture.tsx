@@ -8,7 +8,6 @@ import * as Model from "./model";
 import { GraphCard } from "./graphcard";
 
 const JSZip = require("jszip");
-const FileSaver = require("file-saver");
 
 export const gesturesContainerID: string = "gestures-container";
 
@@ -286,8 +285,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, { base64: true });
 
             zip.generateAsync({ type: "blob" }).then(function (content: any) {
-                // see FileSaver.js 
-                FileSaver.saveAs(content, gestureName + ".zip");
+                // TODOX: save in project
             });
         }
 
