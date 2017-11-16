@@ -576,8 +576,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                             </div>
                                                         <ul className="list">
                                                             <li>Make sure that the Circuit Playground Express is connected to your computer</li>
-                                                            <li>Set the device to <em>Program Mode</em> (all of the neopixel lights should turn green)</li>
-                                                            <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
+                                                            <li>Make sure LEDs are green or press the <code>reset</code> button once</li>
+                                                            <li>Download the <code>streamer.uf2</code> file to the CPLAYBOOT drive</li>
                                                         </ul>
                                                         <br />
                                                         <a id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" href="/streamer.uf2">
