@@ -1,5 +1,23 @@
 
-# Contributing
+# pxt-gestures
+
+## Building
+
+The root folder contains the pxt package that gets loaded in the MakeCode editor.
+The ``app`` folder contains the React App that gets loaded in the editor IFrame and interacts with the editor.
+
+## Building the package
+
+Follow the PXT package development instructions.
+
+## Building the app
+
+* go to ``app``
+* run ``npm install``
+* run ``npm run test`` for local dev
+* run ``npm run deploy`` for deployment to github pages
+
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
