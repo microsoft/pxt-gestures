@@ -24,13 +24,11 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         if (this.props.editable) {
             this.parentData = props.parent.state.data;
 
-            let gid = this.getGestureIndex(props.gestureID);
-            let sid = this.getSampleIndex(gid, props.sampleID);
+            let gid = this.getGestureIndex(props.gestureID || 0);
+            let sid = this.getSampleIndex(gid, props.sampleID || 0);
 
             this.sample = props.parent.state.data[gid].gestures[sid];
-        }
-        else
-            this.sample = props.data;
+        } else this.sample = props.data as GestureSample;
 
         this.state = { editMode: false };
         this.handleDelete = this.handleDelete.bind(this);
@@ -59,7 +57,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     }
 
     handleDelete(e: any) {
-        this.props.onDeleteHandler(this.props.gestureID, this.props.sampleID);
+        this.props.onDeleteHandler(this.props.gestureID || 0, this.props.sampleID || 0);
     }
 
     handleEdit(e: any) {
@@ -82,7 +80,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         // re-render based on
         this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex + 1, true);
         this.svgCrop.style("opacity", 0);
-        this.props.onCropHandler(this.props.gestureID, this.props.sampleID, this.sample.cropStartIndex, this.sample.cropEndIndex);
+        this.props.onCropHandler(this.props.gestureID || 0, this.props.sampleID || 0, this.sample.cropStartIndex, this.sample.cropEndIndex);
     }
 
     // on "edit" click 
@@ -184,7 +182,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("fill", "none");
 
 
-        let svgCropWidth = width - this.props.dx; //because the graph doesn't show the last point! TODO: fix this!
+        let svgCropWidth = width - this.props.dx; // because the graph doesn't show the last point! TODO: fix this!
         if (svgCropWidth < 0) svgCropWidth = 0;
         let svgCropHeight = height * 3 + 15;
         let strokeWidth = 2;
@@ -226,14 +224,14 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.svgCrop.append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", 0) //TODO: should initialize all of these with the cropStart/End values
+            .attr("width", 0) // TODO: should initialize all of these with the cropStart/End values
             .attr("height", svgCropHeight)
             .attr("fill", "rgba(0, 0, 0, 0.5)")
             .attr("class", "leftRec");
         this.svgCrop.append("path")
             .attr("d", "M" + (0 + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight)
             .attr("stroke-width", strokeWidth)
-            .attr("stroke", "black") //attr("id", "").on("click", () => {})
+            .attr("stroke", "black") // attr("id", "").on("click", () => {})
             .attr("style", "cursor:w-resize")
             .call(d3.drag()
                 .on("drag", dragLeft));
@@ -241,14 +239,14 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.svgCrop.append("rect")
             .attr("x", svgCropWidth)
             .attr("y", 0)
-            .attr("width", 0) //TODO: should initialize all of these with the cropStart/End values
+            .attr("width", 0) // TODO: should initialize all of these with the cropStart/End values
             .attr("height", svgCropHeight)
             .attr("fill", "rgba(0, 0, 0, 0.5)")
             .attr("class", "RightRec");
         this.svgCrop.append("path")
             .attr("d", "M" + (svgCropWidth - strokeWidth / 2).toString() + " 0 v " + svgCropHeight)
             .attr("stroke-width", strokeWidth)
-            .attr("stroke", "black") //attr("id", "").on("click", () => {})
+            .attr("stroke", "black") // attr("id", "").on("click", () => {})
             .attr("style", "cursor:e-resize")
             .call(d3.drag()
                 .on("drag", dragRight));
@@ -277,15 +275,15 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                                 this.state.editMode == true
                                     ?
                                     <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
-                                        <i className="checkmark icon"></i>
+                                        <i className="checkmark icon"/>
                                     </button>
                                     :
                                     <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
-                                        <i className="crop icon"></i>
+                                        <i className="crop icon" />
                                     </button>
                             }
                                 <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
-                                    <i className="remove icon"></i>
+                                    <i className="remove icon" />
                                 </button>
                             </div>
                         </div>
@@ -293,10 +291,10 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                 <div ref="graphContainer" className="ui segment graph-container">
                     {
                         <div style={clipperStyle}>
-                            <svg ref="svgX"></svg>
-                            <svg ref="svgY"></svg>
-                            <svg ref="svgZ"></svg>
-                            <svg ref="svgCrop"></svg>
+                            <svg ref="svgX"/>
+                            <svg ref="svgY"/>
+                            <svg ref="svgZ"/>
+                            <svg ref="svgCrop"/>
                         </div>
                     }
                 </div>
