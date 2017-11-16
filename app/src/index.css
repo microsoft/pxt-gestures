@@ -1,7 +1,3 @@
-// command to re-compile:
-// do this in pxt-adafruit (not pxt!)
-// node node_modules/less/bin/lessc theme/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar
-
 #webcam-video {
     width: 100%;
 }
@@ -113,23 +109,23 @@
 }
 
 
-.ui.modal.gesturedialog .ui.dividing.header, .ui.modal.gesturedialog .content > .header{
+.ui.dividing.header, .content > .header{
     font-weight: normal !important;
 }
 
-.ui.modal.gesturedialog .ui.secondary.inverted.pointing.menu {
+.ui.secondary.inverted.pointing.menu {
     border: 0;
 }
 
-.ui.modal.gesturedialog .group {
+.group {
     padding:1rem;
 }
 
-.ui.modal.gesturedialog > .content {
+.content {
     padding: 0 !important;
 }
 
-.ui.modal.gesturedialog .tabsegment {
+.tabsegment {
     min-height: 450px;
     background: white !important;
 }
