@@ -14,8 +14,6 @@ interface GestureToolboxState {
     visible?: boolean;
     // switch between the edit gesture mode and the main gesture view containing all of the recorded and imported gestures
     editGestureMode?: boolean;
-    // within the editGestureMode, shows or hides the description bar on the bottom of the main DisplayGesture
-    gestureDescriptionVisible?: boolean;
     // contains all of the gesture data
     data?: Types.Gesture[];
     // is the Circuit Playground streaming accelerometer data or not
@@ -53,7 +51,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         this.state = {
             visible: false,
             editGestureMode: false,
-            gestureDescriptionVisible: false,
             data: data,
             connected: false
         };
@@ -105,7 +102,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         // though it will not reload if there were no changes to any of the gestures
         if (this.hasBeenModified) this.generateBlocks();
 
-        this.setState({ visible: false, editGestureMode: false, gestureDescriptionVisible: false });
+        this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
 
         if (this.state.editGestureMode)
@@ -239,7 +236,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
             // update blocks if was touched
             if (this.hasBeenModified) this.generateBlocks();
-            this.setState({ editGestureMode: false, gestureDescriptionVisible: false, data: cloneData });
+            this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
             this.recorder.PauseWebcam();
@@ -251,7 +248,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
          * new Gesture and switches to the editGesture window
          */
         const newGesture = () => {
-            this.setState({ editGestureMode: true, gestureDescriptionVisible: false });
+            this.setState({ editGestureMode: true });
             this.resetGraph();
             this.state.data.push(new Types.Gesture());
             // TODO: change this method of keeping the current gesture index to something more reliable
@@ -265,7 +262,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
          * @param gestureID the unique gesture id to switch to
          */
         const editGesture = (gestureID: number) => {
-            this.setState({ editGestureMode: true, gestureDescriptionVisible: false });
+            this.setState({ editGestureMode: true });
             this.resetGraph();
             this.curGestureIndex = this.getGestureIndex(gestureID);
         }
@@ -425,16 +422,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         }
 
         /**
-         * Toggles between the two states of showing the "add description text box" and hiding it.
-         */
-        const toggleEditDescription = (event: any) => {
-            if (this.state.gestureDescriptionVisible)
-                this.setState({ gestureDescriptionVisible: false });
-            else
-                this.setState({ gestureDescriptionVisible: true });
-        }
-
-        /**
          * Uploads the streamer code
          * TODO: update this to modify main.ts with streamer code, and then upload it to the device
          * instead of requiring unix cmd copy/paste mechanism of a pre-generated streamer.uf2 file.
@@ -452,28 +439,15 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
 
         return (
-            <div className="gesturedialog">
+            <div className="ui container">
                 <div className="ui segment">
                     {this.state.editGestureMode
                         ?
-                        <button className="ui button icon huge clear left floated" id="back-btn" onClick={() => backToMain()}>
+                        <button className="ui button icon huge clear" id="back-btn" onClick={() => backToMain()}>
                             <i className="icon chevron left large"></i>
                         </button>
                         :
-                        <span className="ui header left floated">{"Gesture Toolbox"}</span>
-                    }
-                    {
-                        this.state.connected ?
-                            <div className="ui basic label green" id="indicator">
-                                <i className="icon checkmark green"></i>
-                                Connected
-                        </div>
-                            :
-                            <div>
-                                <button className="ui icon button basic refresh yellow compact tiny" id="indicator">
-                                    Disconnected
-                            </button>
-                            </div>
+                        <span className="ui header">Gesture Toolbox</span>
                     }
                 </div>
                 <div className="ui segment bottom attached tab active tabsegment">
@@ -481,8 +455,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                         this.state.editGestureMode == false ?
                             <div className="ui">
                                 <div className="ui buttons">
-                                    <button className="ui primary" onClick={() => newGesture()}>
-                                        {"New Gesture..."}
+                                    <button className="ui button primary" onClick={() => newGesture()}>
+                                        New Gesture...
                                     </button>
                                 </div>
                                 <div className="ui divider"></div>
@@ -499,10 +473,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                             <button className="ui icon button purple inverted compact tiny right floated" onClick={() => { editGesture(gesture.gestureID) }}>
                                                                 Edit Gesture
                                                 </button>
-                                                            {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
-                                                    <i className="icon puzzle"></i>
-                                                    &nbsp;Create Block
-                                                </button> */}
                                                         </div>
                                                         <div className="ui segment">
                                                             <div className="ui grid">
@@ -546,20 +516,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                         <svg className="row" id="realtime-graph-z"></svg>
                                                         <svg id="recognition-overlay"></svg>
                                                     </div>
-                                                    {/* {
-                                            this.state.showInstructions ?
-                                            <div className="ui info message" id="instructions-message">
-                                                <i className="close icon"></i>
-                                                <div className="header">
-                                                    Recording new gestures
-                                                </div>
-                                                <ul className="list">
-                                                    <li>Perform the gesture and take a look at how the signals representing the accelerometer data are changing</li>
-                                                    <li>To record a new sample, press and hold the space-bar while performing the gesture (you can edit or delete them later)</li>
-                                                </ul>
-                                            </div>
-                                            : undefined
-                                        } */}
                                                 </div>
                                                 :
                                                 <div className="ui message">
@@ -614,10 +570,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                     <i className="save icon" />
                                                 </button>
                                             </div>
-                                            <button className="ui basic button right floated compact tiny blue" ref="description-add-btn" onClick={toggleEditDescription}>
-                                                <i className="icon add circle"></i>
-                                                Add Description
-                                    </button>
                                         </div>
                                         <div className="ui segment">
                                             <div className="ui grid">
@@ -644,18 +596,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                 }
                                             </div>
                                         </div>
-                                        {
-                                            this.state.gestureDescriptionVisible ?
-                                                <div className="ui segment">
-                                                    <div className="ui form">
-                                                        <div className="field">
-                                                            <label>Gesture Description</label>
-                                                            <textarea rows={2} value={this.state.data[this.curGestureIndex].description} onFocus={() => { this.recorder.PauseEventListeners(); }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameDescription}></textarea>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                : undefined
-                                        }
                                     </div>
                                     <div id="gestures-fluid-container">
                                         {
