@@ -25,28 +25,30 @@ interface GestureToolboxState {
     connected?: boolean;
 }
 
-export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
+export interface IGestureSettingsProps {
+
+}
+
+export class GestureToolbox extends React.Component<IGestureSettingsProps, GestureToolboxState> {
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
     private recognitionOverlay: Viz.RecognitionOverlay;
 
     private graphInitialized: boolean;
-    private webcamInitialized: boolean;
     private recorderInitialized: boolean;
     private hasBeenModified: boolean;
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
     private mainViewGesturesGraphsKey: number;
-    private editedGestureName: string;
 
     private models: Model.SingleDTWCore[];
 
     private lastConnectedTime: number;
-    private intervalID: number;
+    private intervalID: NodeJS.Timer;
 
-    constructor(props: ISettingsProps) {
+    constructor(props: IGestureSettingsProps) {
         super(props);
 
         let data: Types.Gesture[] = [];
@@ -66,7 +68,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.curGestureIndex = 0;
 
         this.graphInitialized = false;
-        this.webcamInitialized = false;
         this.recorderInitialized = false;
         this.hasBeenModified = false;
     }
@@ -83,7 +84,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 codeBlocks.push(this.models[i].GenerateBlock());
         }
 
-        this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
+        // TODOX: send code back to editor this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(codeBlocks));
 
         this.hasBeenModified = false;
     }
@@ -109,7 +110,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.setState({ visible: false, editGestureMode: false, gestureDescriptionVisible: false });
         this.resetGraph();
-        
+
         if (this.state.editGestureMode)
             this.recorder.PauseWebcam();
 
@@ -119,50 +120,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     show() {
         this.setState({ visible: true });
-
-        this.intervalID = setInterval(() => {
-            let elapsedTime = Date.now() - this.lastConnectedTime;
-
-            if (elapsedTime > 1000) {
-                if (this.state.connected) {
-                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
-                    this.setState({ connected: false });
-                }
-
-                // TODO: this reconnect has been messing around with the hid serialport, which
-                // doesn't allow the device to be reprogrammed
-
-                // if(!this.state.reconnecting) {
-                //     // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
-                //     this.setState({ reconnecting: true });
-
-                //     if (hidbridge.shouldUse())
-                //         hidbridge.initAsync()
-                //         .then(dev => {
-                //             dev.onSerial = onSerialData;
-                //         })
-                //         .catch(reason => {
-                //             this.setState({ connected: false, reconnecting: false });
-                //         });
-                // }
-                // else {
-                //     this.reconnectAttempts++;
-                //     if(this.reconnectAttempts == 3) {
-                //         this.reconnectAttempts = 0;
-                //         this.setState({ connected: false, reconnecting: false });
-                //     }
-                // }
-            }
-            else {
-                // we are connected to the device
-                if (!this.state.connected) {
-                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
-                    this.setState({ connected: true });
-                }
-            }
-        }, 500);
-
-        this.connectToDevice();
     }
 
     /**
@@ -171,9 +128,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
      */
     connectToDevice() {
         const onSerialData = (buf: any, isErr: any) => {
-            let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+            let strBuf: string = ""// TODOX //Util.fromUTF8(Util.uint8ArrayToString(buf));
             let newData = Recorder.parseString(strBuf);
-            
+
             // make sure that the input stream of data is correct (contains accelerometer data)
             if (newData.acc)
                 this.lastConnectedTime = Date.now();
@@ -198,12 +155,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         };
 
-        if (hidbridge.shouldUse()) {
-            hidbridge.initAsync()
-            .then(dev => {
-                dev.onSerial = onSerialData;
-            });
-        }
+        // TODOX: hook to serial dat
     }
 
     /**
@@ -212,7 +164,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
      */
     resetGraph() {
         this.graphInitialized = false;
-        this.webcamInitialized = false;
         this.recorderInitialized = false;
     }
 
@@ -281,8 +232,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
     renderCore() {
-        const targetTheme = pxt.appTarget.appTheme;
-
         /**
          * returns from the editGesture window to the main window and 
          * generates the gesture blocks if they have been modified
@@ -334,19 +283,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let gestureName = this.state.data[gestureIndex].name;
             let zip = new JSZip();
             zip.file("gesture.json", JSON.stringify(this.state.data[gestureIndex]));
-            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, {base64: true});
+            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, { base64: true });
 
-            zip.generateAsync({type: "blob"}).then(function(content: any) {
-                    // see FileSaver.js 
-                    FileSaver.saveAs(content, gestureName + ".zip");
-            });            
-        }
-
-        /**
-         * opens the "file selector input" in the browser to import a new gesture
-         */
-        const importGesture = () => {
-            document.getElementById("file-input-btn").click();
+            zip.generateAsync({ type: "blob" }).then(function (content: any) {
+                // see FileSaver.js 
+                FileSaver.saveAs(content, gestureName + ".zip");
+            });
         }
 
         /**
@@ -357,7 +299,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let files = evt.target.files; // FileList object
 
             // files is a FileList of File objects. List some properties.
-            for (let i = 0; i < files.length ; i++) {
+            for (let i = 0; i < files.length; i++) {
                 let parsedGesture: Types.Gesture = new Types.Gesture();
                 let cloneData = this.state.data.slice();
                 cloneData.push(parsedGesture);
@@ -377,9 +319,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 for (let j = 0; j < importedGesture.gestures.length; j++) {
                                     parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
                                 }
-                                
+
                                 parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-                                
+
                                 let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
                                 newModel.Update(cloneData[curIndex].getCroppedData());
                                 this.models.push(newModel);
@@ -387,8 +329,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 this.setState({ data: cloneData });
                                 this.hasBeenModified = true;
                             })
-                        }
-                        else if (zipEntry.name == "video.mp4") {
+                        } else if (zipEntry.name == "video.mp4") {
                             // set the video
                             zipEntry.async("base64").then((data: any) => {
                                 // using this base64 to blob conversion:
@@ -400,7 +341,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     byteNumbers[i] = byteCharacters.charCodeAt(i);
 
                                 let byteArray = new Uint8Array(byteNumbers);
-                                let blob = new Blob([byteArray], {type: "video/mp4"});
+                                let blob = new Blob([byteArray], { type: "video/mp4" });
 
                                 parsedGesture.displayVideoLink = window.URL.createObjectURL(blob);
                                 parsedGesture.displayVideoData = blob;
@@ -533,14 +474,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const onRecordMethodChange = (event: any) => {
             let element = document.getElementById("record-mode-select") as HTMLSelectElement;
 
-            switch(element.value) {
+            switch (element.value) {
                 case "PressAndHold":
                     this.recorder.SetRecordingMethod(Recorder.RecordMode.PressAndHold);
-                break;
+                    break;
 
                 case "PressToToggle":
                     this.recorder.SetRecordingMethod(Recorder.RecordMode.PressToToggle);
-                break;
+                    break;
+                default: break;
             }
         }
 
@@ -584,14 +526,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
          * instead of requiring unix cmd copy/paste mechanism of a pre-generated streamer.uf2 file.
          */
         const uploadStreamerCode = () => {
-            compile_ws.send("compile");
-        }
-
-        /**
-         * tries to reconnect the serial port
-         */
-        const reconnectDevice = () => {
-            this.connectToDevice();
+            // TODOX
         }
 
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
@@ -601,124 +536,109 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const headerStyle = { height: "60px" };
         const buttonHeightStyle = { height: "30px" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
-        
+
         return (
-            <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
-                onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
-                <sui.Segment attached="top" className="top-bar">
+            <div className="gesturedialog">
+                <div className="ui segment">
                     {this.state.editGestureMode
                         ?
-                        <button className="ui button icon huge clear left floated" id="back-btn" onClick={() => backToMain() }>
+                        <button className="ui button icon huge clear left floated" id="back-btn" onClick={() => backToMain()}>
                             <i className="icon chevron left large"></i>
                         </button>
                         :
-                        <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
+                        <span className="ui header left floated">{"Gesture Toolbox"}</span>
                     }
-                    <button className="ui button icon huge clear" id="clear-btn" onClick={() => this.hide() }>
+                    <button className="ui button icon huge clear" id="clear-btn" onClick={() => this.hide()}>
                         <i className="icon close large"></i>
                     </button>
                     {
-                        this.state.connected ? 
-                        <div className="ui basic label green" id="indicator">
-                            <i className="icon checkmark green"></i>
-                            Connected
+                        this.state.connected ?
+                            <div className="ui basic label green" id="indicator">
+                                <i className="icon checkmark green"></i>
+                                Connected
                         </div>
-                        :
-                        <div>
-                            <button className="ui icon button basic refresh yellow compact tiny" id="indicator" onClick={reconnectDevice}>
-                                Reconnect?
-                            </button>
-                        </div>
-                    }
-                </sui.Segment>
-                <div className="ui segment bottom attached tab active tabsegment">
-                {
-                    this.state.editGestureMode == false ?
-                    <div className="ui">
-                        <div className="ui cards">
-                            <codecard.CodeCardView
-                                        key={'newpgesture'}
-                                        icon="wizard outline"
-                                        iconColor="primary"
-                                        name={lf("New Gesture...") }
-                                        description={lf("Creates a new empty gesture") }
-                                        onClick={() => newGesture() }
-                                        />
-                            <codecard.CodeCardView
-                                        key={'importgesture'}
-                                        icon="upload outline"
-                                        iconColor="secondary"
-                                        name={lf("Import Gesture...") }
-                                        description={lf("Imports gesture from your computer") }
-                                        onClick={() => importGesture() }
-                                        />
-                        </div>
-                        <input type="file" id="file-input-btn" name="files[]" multiple onChange={handleFileSelect}></input>
-                         <div className="ui divider"></div> 
-                        {
-                            this.state.data.length == 0 ? undefined :
+                            :
                             <div>
+                                <button className="ui icon button basic refresh yellow compact tiny" id="indicator">
+                                    Disconnected
+                            </button>
+                            </div>
+                    }
+                </div>
+                <div className="ui segment bottom attached tab active tabsegment">
+                    {
+                        this.state.editGestureMode == false ?
+                            <div className="ui">
+                                <div className="ui buttons">
+                                    <button className="ui primary" onClick={() => newGesture()}>
+                                        {"New Gesture..."}
+                                    </button>
+                                </div>
+                                <div className="ui divider"></div>
                                 {
-                                    this.state.data.map((gesture) =>
-                                        <div className="ui segments link-effect gesture-container" key={this.mainViewGesturesGraphsKey++} style={gestureContainerMargin}> 
-                                            <div className="ui segment inverted teal" style={headerStyle}>
-                                                <div className="ui header inverted left floated">
-                                                    {gesture.name}
-                                                </div>
-                                                <button className="ui icon button purple inverted compact tiny right floated" onClick={() => {editGesture(gesture.gestureID)}}>
-                                                    Edit Gesture
+                                    this.state.data.length == 0 ? undefined :
+                                        <div>
+                                            {
+                                                this.state.data.map((gesture) =>
+                                                    <div className="ui segments link-effect gesture-container" key={this.mainViewGesturesGraphsKey++} style={gestureContainerMargin}>
+                                                        <div className="ui segment inverted teal" style={headerStyle}>
+                                                            <div className="ui header inverted left floated">
+                                                                {gesture.name}
+                                                            </div>
+                                                            <button className="ui icon button purple inverted compact tiny right floated" onClick={() => { editGesture(gesture.gestureID) }}>
+                                                                Edit Gesture
                                                 </button>
-                                                <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
-                                                    <i className="icon cloud download"></i>
-                                                </button>
-                                                {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+                                                            <button className="ui icon button blue inverted compact tiny right floated" onClick={() => { downloadGesture(gesture.gestureID) }}>
+                                                                <i className="icon cloud download"></i>
+                                                            </button>
+                                                            {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
                                                     <i className="icon puzzle"></i>
                                                     &nbsp;Create Block
                                                 </button> */}
-                                            </div>
-                                            <div className="ui segment">
-                                                <div className="ui grid">
-                                                    <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay loop></video>
-                                                    <GraphCard
-                                                        key={ gesture.gestureID }
-                                                        editable={ false }
-                                                        parent={ this }
-                                                        data={ gesture.displayGesture }
-                                                        dx={ 7 }
-                                                        graphHeight={ 70 }
-                                                        maxVal={ 2450 }
-                                                        style={ mainGraphStyle }
-                                                    />
-                                                </div>
-                                            </div>
+                                                        </div>
+                                                        <div className="ui segment">
+                                                            <div className="ui grid">
+                                                                <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay loop></video>
+                                                                <GraphCard
+                                                                    key={gesture.gestureID}
+                                                                    editable={false}
+                                                                    parent={this}
+                                                                    data={gesture.displayGesture}
+                                                                    dx={7}
+                                                                    graphHeight={70}
+                                                                    maxVal={2450}
+                                                                    style={mainGraphStyle}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
                                         </div>
-                                    )
                                 }
                             </div>
-                        }
-                    </div>
-                    :
-                    <div>
-                        <div className="ui segment three column grid">
-                            <div className="four wide column">
-                                {
-                                    this.state.connected ?
-                                    <video id="webcam-video" className="flipped-video"></video>
-                                    :
-                                    undefined
-                                }
-                            </div>
-                            <div className="nine wide column">
-                                {
-                                    this.state.connected ?
-                                    <div>
-                                        <div ref={initGraph}>
-                                            <svg className="row" id="realtime-graph-x"></svg>
-                                            <svg className="row" id="realtime-graph-y"></svg>
-                                            <svg className="row" id="realtime-graph-z"></svg>
-                                            <svg id="recognition-overlay"></svg>
-                                        </div>
-                                        {/* {
+                            :
+                            <div>
+                                <div className="ui segment three column grid">
+                                    <div className="four wide column">
+                                        {
+                                            this.state.connected ?
+                                                <video id="webcam-video" className="flipped-video"></video>
+                                                :
+                                                undefined
+                                        }
+                                    </div>
+                                    <div className="nine wide column">
+                                        {
+                                            this.state.connected ?
+                                                <div>
+                                                    <div ref={initGraph}>
+                                                        <svg className="row" id="realtime-graph-x"></svg>
+                                                        <svg className="row" id="realtime-graph-y"></svg>
+                                                        <svg className="row" id="realtime-graph-z"></svg>
+                                                        <svg id="recognition-overlay"></svg>
+                                                    </div>
+                                                    {/* {
                                             this.state.showInstructions ?
                                             <div className="ui info message" id="instructions-message">
                                                 <i className="close icon"></i>
@@ -732,128 +652,128 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             </div>
                                             : undefined
                                         } */}
-                                    </div>
-                                    :
-                                    <div className="ui message">
-                                        <div className="content">
-                                            <div className="header">
-                                                Steps to Program Streamer
+                                                </div>
+                                                :
+                                                <div className="ui message">
+                                                    <div className="content">
+                                                        <div className="header">
+                                                            Steps to Program Streamer
                                             </div>
-                                            <ul className="list">
-                                                <li>Make sure that the Circuit Playground Express is connected to your computer</li>
-                                                <li>Set the device to <em>Program Mode</em> (all of the neopixel lights should turn green)</li>
-                                                <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
-                                            </ul>
-                                            <br/>
-                                            <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" onClick={uploadStreamerCode}>
-                                                <i className="download icon icon-and-text"></i>
-                                                <span className="ui text">Program Streamer</span>
-                                            </button>
-                                        </div>
-                                    </div>
+                                                        <ul className="list">
+                                                            <li>Make sure that the Circuit Playground Express is connected to your computer</li>
+                                                            <li>Set the device to <em>Program Mode</em> (all of the neopixel lights should turn green)</li>
+                                                            <li>Upload the <em>streamer.uf2</em> program to the device by dragging it into the device's removable drive</li>
+                                                        </ul>
+                                                        <br />
+                                                        <button id="program-streamer-btn" className="ui button compact icon-and-text primary download-button big" onClick={uploadStreamerCode}>
+                                                            <i className="download icon icon-and-text"></i>
+                                                            <span className="ui text">Program Streamer</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
 
-                                }
-                            </div>
-                            <div className="three wide column">
-                                {
-                                    this.state.connected ?
-                                    <div ref={initRecorder} className="ui segments basic">
-                                        <div className="ui segment basic center aligned">
-                                            <button id="record-btn" className="circular ui icon button" style={colossalStyle}>
-                                                <i className="icon record"></i>
-                                            </button>
-                                        </div>
-                                        <div className="ui segment basic center aligned">
-                                            <span className="ui text">Record method:</span>
-                                            <br/>
-                                            <select id="record-mode-select" className="ui dropdown" onChange={onRecordMethodChange}>
-                                                <option value="PressAndHold">Press &amp; Hold</option>
-                                                <option value="PressToToggle">Press to Toggle</option>
-                                            </select>                                            
-                                        </div>
+                                        }
                                     </div>
-                                    :
-                                    undefined    
-                                }
-                            </div>
-                        </div>
-                        <div id="recorded-gestures">
-                            <div className="ui segments" id="display-gesture">
-                                <div className="ui segment inverted teal" style={headerStyle}>
-                                    <div className="ui action input left floated">
-                                        <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameGesture}></input>
-                                        <button className="ui icon button compact tiny" style={buttonHeightStyle}>
-                                            <i className="save icon"></i>
-                                        </button>
+                                    <div className="three wide column">
+                                        {
+                                            this.state.connected ?
+                                                <div ref={initRecorder} className="ui segments basic">
+                                                    <div className="ui segment basic center aligned">
+                                                        <button id="record-btn" className="circular ui icon button" style={colossalStyle}>
+                                                            <i className="icon record"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div className="ui segment basic center aligned">
+                                                        <span className="ui text">Record method:</span>
+                                                        <br />
+                                                        <select id="record-mode-select" className="ui dropdown" onChange={onRecordMethodChange}>
+                                                            <option value="PressAndHold">Press &amp; Hold</option>
+                                                            <option value="PressToToggle">Press to Toggle</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                :
+                                                undefined
+                                        }
                                     </div>
-                                    <button className="ui basic button right floated compact tiny blue" ref="description-add-btn" onClick={toggleEditDescription}>
-                                        <i className="icon add circle"></i>
-                                        Add Description
+                                </div>
+                                <div id="recorded-gestures">
+                                    <div className="ui segments" id="display-gesture">
+                                        <div className="ui segment inverted teal" style={headerStyle}>
+                                            <div className="ui action input left floated">
+                                                <input style={inputStyle} type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onFocus={() => { this.recorder.PauseEventListeners(); }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameGesture} />
+                                                <button className="ui icon button compact tiny" style={buttonHeightStyle}>
+                                                    <i className="save icon" />
+                                                </button>
+                                            </div>
+                                            <button className="ui basic button right floated compact tiny blue" ref="description-add-btn" onClick={toggleEditDescription}>
+                                                <i className="icon add circle"></i>
+                                                Add Description
                                     </button>
-                                </div>
-                                <div className="ui segment">
-                                    <div className="ui grid">
-                                        {
-                                            this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                            <video className="flipped-video gesture-video" src="" autoPlay loop></video>
-                                            :
-                                            <video className="flipped-video gesture-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay loop></video>
-                                        }
-                                        {
-                                            this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                            undefined
-                                            :
-                                            <GraphCard
-                                                key={ this.state.data[this.curGestureIndex].displayGesture.sampleID }
-                                                editable={ false }
-                                                parent={ this }
-                                                data={ this.state.data[this.curGestureIndex].displayGesture }
-                                                dx={ 7 }
-                                                graphHeight={ 70 }
-                                                maxVal={ 2450 }
-                                                style={ mainGraphStyle }
-                                            />
-                                        }
-                                    </div>
-                                </div>
-                                {
-                                this.state.gestureDescriptionVisible ? 
-                                <div className="ui segment">
-                                    <div className="ui form">
-                                        <div className="field">
-                                            <label>Gesture Description</label>
-                                            <textarea rows={2} value={this.state.data[this.curGestureIndex].description} onFocus={() => {this.recorder.PauseEventListeners();}} onBlur={() => {this.recorder.ResumeEventListeners();}} onChange={renameDescription}></textarea>
                                         </div>
+                                        <div className="ui segment">
+                                            <div className="ui grid">
+                                                {
+                                                    this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                                        <video className="flipped-video gesture-video" src="" autoPlay={true} loop={true}></video>
+                                                        :
+                                                        <video className="flipped-video gesture-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay={true} loop={true}></video>
+                                                }
+                                                {
+                                                    this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                                        undefined
+                                                        :
+                                                        <GraphCard
+                                                            key={this.state.data[this.curGestureIndex].displayGesture.sampleID}
+                                                            editable={false}
+                                                            parent={this}
+                                                            data={this.state.data[this.curGestureIndex].displayGesture}
+                                                            dx={7}
+                                                            graphHeight={70}
+                                                            maxVal={2450}
+                                                            style={mainGraphStyle}
+                                                        />
+                                                }
+                                            </div>
+                                        </div>
+                                        {
+                                            this.state.gestureDescriptionVisible ?
+                                                <div className="ui segment">
+                                                    <div className="ui form">
+                                                        <div className="field">
+                                                            <label>Gesture Description</label>
+                                                            <textarea rows={2} value={this.state.data[this.curGestureIndex].description} onFocus={() => { this.recorder.PauseEventListeners(); }} onBlur={() => { this.recorder.ResumeEventListeners(); }} onChange={renameDescription}></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                : undefined
+                                        }
                                     </div>
-                                </div> 
-                                : undefined
-                                }
+                                    <div id="gestures-fluid-container">
+                                        {
+                                            this.state.data[this.curGestureIndex].gestures.map((sample) =>
+                                                <GraphCard
+                                                    key={sample.sampleID}
+                                                    editable={true}
+                                                    parent={this}
+                                                    gestureID={this.state.data[this.curGestureIndex].gestureID}
+                                                    sampleID={sample.sampleID}
+                                                    dx={7}
+                                                    graphHeight={80}
+                                                    maxVal={2450}
+                                                    onDeleteHandler={onSampleDelete}
+                                                    onCropHandler={onSampleCrop}
+                                                    style={sampleMarginStyle}
+                                                    ref={this.updateScrollbar}
+                                                />
+                                            )
+                                        }
+                                    </div>
+                                </div>
                             </div>
-                            <div id="gestures-fluid-container">
-                            {
-                                this.state.data[this.curGestureIndex].gestures.map((sample) =>
-                                    <GraphCard
-                                        key={ sample.sampleID }
-                                        editable={ true }
-                                        parent={ this }
-                                        gestureID={ this.state.data[this.curGestureIndex].gestureID }
-                                        sampleID={ sample.sampleID }
-                                        dx={ 7 }
-                                        graphHeight={ 80 }
-                                        maxVal={ 2450 }
-                                        onDeleteHandler={ onSampleDelete }
-                                        onCropHandler={ onSampleCrop }
-                                        style={ sampleMarginStyle }
-                                        ref={this.updateScrollbar}
-                                    />
-                                )
-                            }
-                            </div>
-                            </div>
-                        </div>
                     }
-                    </div>
-            </sui.Modal>
+                </div>
+            </div>
         )
     }
 }
