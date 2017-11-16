@@ -1,0 +1,13 @@
+{
+    "name": "pxt-gesture",
+    "description": "A gesture trainier",
+    "public": true,
+    "dependencies": {
+        "core": "*"
+    },    
+    "extension": {
+        "namespace": "input",
+        "label": "Gesture Editor",
+        "localUrl": "http://localhost:3000"
+    }
+}
