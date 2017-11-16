@@ -7,8 +7,6 @@ import * as Viz from "./visualizations";
 import * as Model from "./model";
 import { GraphCard } from "./graphcard";
 
-const JSZip = require("jszip");
-
 export const gesturesContainerID: string = "gestures-container";
 
 interface GestureToolboxState {
@@ -273,88 +271,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         }
 
         /**
-         * converts all of the gesture data (Gesture and GestureSample[]) of the given gesture into a JSON file
-         * and compress it along with the main recorded video and finally will download it to the users browser.
-         * @param gestureID the unique gesture id of the gesture to be downloaded
-         */
-        const downloadGesture = (gestureID: number) => {
-            let gestureIndex = this.getGestureIndex(gestureID);
-            let gestureName = this.state.data[gestureIndex].name;
-            let zip = new JSZip();
-            zip.file("gesture.json", JSON.stringify(this.state.data[gestureIndex]));
-            zip.file("video.mp4", this.state.data[gestureIndex].displayVideoData, { base64: true });
-
-            zip.generateAsync({ type: "blob" }).then(function (content: any) {
-                // TODOX: save in project
-            });
-        }
-
-        /**
-         * decompresses and parses the imported gesture file and will 
-         * update this.state.data[] array with the newly imported gesture
-         */
-        const handleFileSelect = (evt: any) => {
-            let files = evt.target.files; // FileList object
-
-            // files is a FileList of File objects. List some properties.
-            for (let i = 0; i < files.length; i++) {
-                let parsedGesture: Types.Gesture = new Types.Gesture();
-                let cloneData = this.state.data.slice();
-                cloneData.push(parsedGesture);
-                let curIndex = cloneData.length - 1;
-
-                JSZip.loadAsync(files[i]).then((zip: any) => {
-                    zip.forEach((relativePath: string, zipEntry: any) => {
-                        // console.log(zipEntry);
-                        if (zipEntry.name == "gesture.json") {
-                            // populate the parameters of the newly imported gesture
-                            zipEntry.async("string").then((text: string) => {
-                                let importedGesture = (JSON.parse(text) as Types.Gesture);
-                                parsedGesture.description = importedGesture.description;
-                                parsedGesture.name = importedGesture.name;
-                                parsedGesture.labelNumber = importedGesture.labelNumber;
-
-                                for (let j = 0; j < importedGesture.gestures.length; j++) {
-                                    parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
-                                }
-
-                                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-
-                                let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
-                                newModel.Update(cloneData[curIndex].getCroppedData());
-                                this.models.push(newModel);
-
-                                this.setState({ data: cloneData });
-                                this.hasBeenModified = true;
-                            })
-                        } else if (zipEntry.name == "video.mp4") {
-                            // set the video
-                            zipEntry.async("base64").then((data: any) => {
-                                // using this base64 to blob conversion:
-                                // https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
-                                let byteCharacters = atob(data);
-                                let byteNumbers = new Array(byteCharacters.length);
-
-                                for (let i = 0; i < byteCharacters.length; i++)
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-
-                                let byteArray = new Uint8Array(byteNumbers);
-                                let blob = new Blob([byteArray], { type: "video/mp4" });
-
-                                parsedGesture.displayVideoLink = window.URL.createObjectURL(blob);
-                                parsedGesture.displayVideoData = blob;
-
-                                this.setState({ data: cloneData });
-                            })
-                        }
-                    });
-                })
-
-                this.setState({ data: cloneData });
-            }
-        }
-
-        /**
          * this function is passed to an editable GraphCard component which contains a delete button
          * @param gid the unique gesture id of the gesture that contains the sample which is going to be deleted
          * @param sid the unique sample id which is going to be deleted
@@ -583,9 +499,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                             <button className="ui icon button purple inverted compact tiny right floated" onClick={() => { editGesture(gesture.gestureID) }}>
                                                                 Edit Gesture
                                                 </button>
-                                                            <button className="ui icon button blue inverted compact tiny right floated" onClick={() => { downloadGesture(gesture.gestureID) }}>
-                                                                <i className="icon cloud download"></i>
-                                                            </button>
                                                             {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
                                                     <i className="icon puzzle"></i>
                                                     &nbsp;Create Block
