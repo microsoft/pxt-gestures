@@ -180,6 +180,6 @@ ${generatedCodeBlocks.join('\n')}
 
 
     private vecArrayToString(vec: Vector[]): string {
-        return '[' + vec.map(v => `{ X: ${v.X}, Y: ${v.Y}, Z: ${v.Z}`).join('\n') + ']';
+        return '[' + vec.map(v => `{ X: ${v.X}, Y: ${v.Y}, Z: ${v.Z} }`).join(',\n') + ']';
     }
 }
