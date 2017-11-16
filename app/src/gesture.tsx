@@ -40,7 +40,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
 
     private models: Model.SingleDTWCore[];
 
-    private lastConnectedTime: number;
     private intervalID: NodeJS.Timer;
 
     constructor(props: IGestureSettingsProps) {
@@ -52,11 +51,10 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             visible: false,
             editGestureMode: false,
             data: data,
-            connected: false
+            connected: true
         };
 
         this.mainViewGesturesGraphsKey = 999;
-        this.lastConnectedTime = 0;
 
         this.models = [];
         this.curGestureIndex = 0;
@@ -124,10 +122,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         const onSerialData = (buf: any, isErr: any) => {
             let strBuf: string = ""// TODOX //Util.fromUTF8(Util.uint8ArrayToString(buf));
             let newData = Recorder.parseString(strBuf);
-
-            // make sure that the input stream of data is correct (contains accelerometer data)
-            if (newData.acc)
-                this.lastConnectedTime = Date.now();
 
             if (this.state.editGestureMode && this.state.connected) {
                 if (newData.acc && this.graphZ.isInitialized()) {
