@@ -121,6 +121,9 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                     if (cons.body.sim) return;
                     this.onSerialData(cons.body.data);
                     break;
+                case "extshown":
+                    this.setState({ connected: false });
+                    break;
                 default:
                     break;
             }
@@ -132,8 +135,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         delete this.idToType[data.id];
         switch (action) {
             case "extinit":
-                this.sendRequest("extreadcode");
                 this.sendRequest("extdatastream");
+                this.sendRequest("extreadcode");
                 break;
             case "extreadcode":
                 // received existing code
