@@ -12,6 +12,27 @@ import { Gesture } from "./types";
 
 export const gesturesContainerID: string = "gestures-container";
 
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
+    let timeout: any;
+    return function () {
+        let context = this
+        let args = arguments;
+        let later = function () {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        let callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+}
+
+
 interface GestureToolboxState {
     // show or hide the GestureToolbox
     visible?: boolean;
@@ -21,6 +42,8 @@ interface GestureToolboxState {
     data?: Types.Gesture[];
     // is the Circuit Playground streaming accelerometer data or not
     connected?: boolean;
+    // needs saving
+    hasBeenModified?: boolean;
 }
 
 export interface IGestureSettingsProps {
@@ -37,7 +60,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
 
     private graphInitialized: boolean;
     private recorderInitialized: boolean;
-    private hasBeenModified: boolean;
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
@@ -46,6 +68,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     private models: Model.SingleDTWCore[];
 
     private intervalID: NodeJS.Timer;
+    private debouncedSaveBlocks: () => void;
 
     constructor(props: IGestureSettingsProps) {
         super(props);
@@ -59,7 +82,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             visible: false,
             editGestureMode: false,
             data: data,
-            connected: false
+            connected: false,
+            hasBeenModified: false
         };
 
         this.mainViewGesturesGraphsKey = 999;
@@ -69,7 +93,8 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
 
         this.graphInitialized = false;
         this.recorderInitialized = false;
-        this.hasBeenModified = false;
+
+        this.debouncedSaveBlocks = debounce(() => this.saveBlocks(), 2000);
     }
 
     sendRequest(action: string, body?: any) {
@@ -129,13 +154,20 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
      * the contents of the custom.ts file with 
      */
     saveBlocks() {
+        if (!this.state.hasBeenModified) return;
+
         const codeBlocks: string[] = this.models
             .filter(m => m.isRunning())
             .map(m => m.GenerateBlock());
         const code = Model.SingleDTWCore.GenerateNamespace(codeBlocks);
         const json = JSON.stringify(this.state.data, null, 2);
         this.sendRequest("extwritecode", { code, json });
-        this.hasBeenModified = false;
+        this.setState({ hasBeenModified: false });
+    }
+
+    markDirty() {
+        if (!this.state.hasBeenModified)
+            this.setState({ hasBeenModified: true }, () => this.debouncedSaveBlocks());
     }
 
     loadBlocks(code: string, json: string) {
@@ -164,25 +196,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         })
         this.setState({ data: cloneData });
     }
-    
-    /*
-    +                                parsedGesture.description = importedGesture.description;
-    +                                parsedGesture.name = importedGesture.name;
-    +                                parsedGesture.labelNumber = importedGesture.labelNumber;
-    +
-    +                                for (let j = 0; j < importedGesture.gestures.length; j++) {
-    +                                    parsedGesture.gestures.push(this.parseJSONGesture(importedGesture.gestures[j]));
-    +                                }
-    +                                
-    +                                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-    +                                
-    +                                let newModel = new Model.SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
-    +                                newModel.Update(cloneData[curIndex].getCroppedData());
-    +                                this.models.push(newModel);
-    +
-    +                                this.setState({ data: cloneData });
-    +                                this.hasBeenModified = true;        
-    */
 
     /**
      * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
@@ -223,7 +236,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     hide() {
         // generates the blocks and reloads the workspace to make them available instantly 
         // though it will not reload if there were no changes to any of the gestures
-        if (this.hasBeenModified) this.saveBlocks();
+        this.saveBlocks();
 
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
@@ -333,7 +346,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             // update name
             cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
             // update blocks if was touched
-            if (this.hasBeenModified) this.saveBlocks();
+            this.saveBlocks();
             this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
@@ -379,10 +392,10 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
 
             cloneData[gi].gestures.splice(si, 1);
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
-            this.hasBeenModified = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
+            this.markDirty();
         }
 
         /**
@@ -402,10 +415,10 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             cloneData[gi].gestures[si].cropEndIndex = newEnd;
 
             this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
-            this.hasBeenModified = true;
             cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
+            this.markDirty();
         }
 
         /**
@@ -457,7 +470,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                     // do not change the order of the following lines:
                     cloneData[gestureIndex].gestures.push(newSample);
                     this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
-                    this.hasBeenModified = true;
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
                     // Currently, it will set the DisplayGesture.video to the *first* recorded video for that gesture
                     // TODO: allow users to change the display video in the future.
@@ -468,6 +480,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                     }
 
                     this.setState({ data: cloneData });
+                    this.markDirty();
                     this.updateScrollbar();
                 }
 
@@ -505,9 +518,9 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].name = event.target.value;
             this.models[this.curGestureIndex].UpdateName(cloneData[this.curGestureIndex].name);
-            this.hasBeenModified = true;
 
             this.setState({ data: cloneData });
+            this.markDirty();
         }
 
         /**
@@ -517,9 +530,9 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             let cloneData = this.state.data.slice();
             cloneData[this.curGestureIndex].description = event.target.value;
             this.models[this.curGestureIndex].UpdateDescription(cloneData[this.curGestureIndex].description);
-            this.hasBeenModified = true;
 
             this.setState({ data: cloneData });
+            this.markDirty();
         }
 
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
@@ -531,16 +544,16 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
 
         return (
-            <div className="ui container">
+            <div className="ui">
                 <div className="ui segment">
                     {this.state.editGestureMode
                         ?
                         <button className="ui button icon huge clear" id="back-btn" onClick={() => backToMain()}>
                             <i className="icon chevron left large"></i>
                         </button>
-                        :
-                        <span className="ui header">Gesture Toolbox</span>
+                        : undefined
                     }
+                    {this.state.hasBeenModified ? <span className="ui floated left">*</span> : undefined}
                 </div>
                 <div className="ui segment bottom attached tab active tabsegment">
                     {
