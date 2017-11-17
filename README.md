@@ -27,6 +27,7 @@ The ``app`` folder contains the React App that gets loaded in the editor IFrame 
    }
 ```
 * reload project and your package should be loaded
+* open ``input`` block category, click on ``Gestures Editor``
 
 ## Contributing
 
