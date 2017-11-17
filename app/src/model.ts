@@ -164,7 +164,7 @@ ${generatedCodeBlocks.join('\n')}
                 const y = input.acceleration(Dimension.Y);
                 const z = input.acceleration(Dimension.Z);
 
-                if (spring.feed({ X: x, Y: y, Z: z }) == 1)
+                if (spring.feed(new Vector(x, y, z)) == 1)
                     control.raiseEvent(${event_src_id_varName}, 1);
 
                 loops.pause(40);    //almost 25fps
@@ -178,6 +178,6 @@ ${generatedCodeBlocks.join('\n')}
 
 
     private vecArrayToString(vec: Vector[]): string {
-        return '[' + vec.map(v => `{ X: ${v.X}, Y: ${v.Y}, Z: ${v.Z} }`).join(',\n') + ']';
+        return '[' + vec.map(v => `new Vector(${v.X}, ${v.Y}, ${v.Z})`).join(',\n') + ']';
     }
 }

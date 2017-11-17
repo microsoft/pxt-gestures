@@ -3,10 +3,15 @@
  */
 //% weight=100 color=#0fbc11 icon=""
 namespace Gestures {
-    export interface Vector {
+    export class Vector {
         X: number;
         Y: number;
         Z: number;
+        constructor(x: number, y: number, z: number) {
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
+        }
     }
 
     function IntegerSqrt(n: number): number {
