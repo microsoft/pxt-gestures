@@ -122,6 +122,13 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                     this.onSerialData(cons.body.data);
                     break;
                 case "extshown":
+                    console.log('pxt-gestures shown')
+                    this.setState({ connected: false });
+                    this.sendRequest("extdatastream");
+                    this.sendRequest("extreadcode")
+                    break;
+                case "exthidden":
+                    console.log('pxt-gestures hidden')
                     this.setState({ connected: false });
                     break;
                 default:
