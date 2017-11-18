@@ -29,6 +29,10 @@ The ``app`` folder contains the React App that gets loaded in the editor IFrame 
 * reload project and your package should be loaded
 * open ``input`` block category, click on ``Gestures Editor``
 
+## MakeCode
+
+* for PXT/adafruit
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
