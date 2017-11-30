@@ -251,9 +251,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
 
-        if (this.state.editGestureMode && this.recorder)
-            this.recorder.PauseWebcam();
-
         this.deleteIfGestureEmpty();
     }
 
@@ -292,7 +289,7 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
     }
 
     /**
-     * Sets the RealTimeGraph, Webcam, and the Recorder uninitialized to make sure that they get initialized again when
+     * Sets the RealTimeGraph, and the Recorder uninitialized to make sure that they get initialized again when
      * editing a gesture or creating a new gesture when changing the component's state back to {editGesture: true}
      */
     resetGraph() {
@@ -360,8 +357,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
             this.setState({ editGestureMode: false, data: cloneData });
 
             this.resetGraph();
-            if (this.recorder)
-                this.recorder.PauseWebcam();
             this.deleteIfGestureEmpty();
         }
 
@@ -481,13 +476,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                     cloneData[gestureIndex].gestures.push(newSample);
                     this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
-                    // Currently, it will set the DisplayGesture.video to the *first* recorded video for that gesture
-                    // TODO: allow users to change the display video in the future.
-                    if (this.state.data[gestureIndex].gestures.length == 1) {
-                        // update video
-                        cloneData[gestureIndex].displayVideoLink = cloneData[gestureIndex].gestures[0].videoLink;
-                        cloneData[gestureIndex].displayVideoData = cloneData[gestureIndex].gestures[0].videoData;
-                    }
 
                     this.setState({ data: cloneData });
                     this.markDirty();
@@ -495,7 +483,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                 }
 
                 this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
-                this.recorder.initWebcam("webcam-video");
                 this.recorder.initRecordButton("record-btn");
                 this.recorderInitialized = true;
             }
@@ -591,7 +578,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                                         </div>
                                                         <div className="ui segment">
                                                             <div className="ui grid">
-                                                                <video className="flipped-video gesture-video" src={gesture.displayVideoLink} autoPlay={true} loop={true}></video>
                                                                 <GraphCard
                                                                     key={gesture.gestureID}
                                                                     editable={false}
@@ -613,14 +599,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                             :
                             <div>
                                 <div className="ui segment three column grid">
-                                    <div className="four wide column">
-                                        {
-                                            this.state.connected ?
-                                                <video id="webcam-video" className="flipped-video"></video>
-                                                :
-                                                undefined
-                                        }
-                                    </div>
                                     <div className="nine wide column">
                                         {
                                             this.state.connected ?
@@ -685,12 +663,6 @@ export class GestureToolbox extends React.Component<IGestureSettingsProps, Gestu
                                         </div>
                                         <div className="ui segment">
                                             <div className="ui grid">
-                                                {
-                                                    this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                                        <video className="flipped-video gesture-video" src="" autoPlay={true} loop={true}></video>
-                                                        :
-                                                        <video className="flipped-video gesture-video" src={this.state.data[this.curGestureIndex].displayVideoLink} autoPlay={true} loop={true}></video>
-                                                }
                                                 {
                                                     this.state.data[this.curGestureIndex].gestures.length == 0 ?
                                                         undefined

@@ -15,8 +15,6 @@ export class Gesture {
     public name: string;
     public description: string;
     public displayGesture: GestureSample;
-    public displayVideoLink: any;
-    public displayVideoData: any;
     private static id: number = 0;
     public gestureID: number;
 

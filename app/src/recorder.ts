@@ -1,10 +1,7 @@
 import { Vector, GestureSample } from './types';
 import * as Viz from './visualizations';
-const MediaStreamRecorder = require("msr");
 
 let nav = navigator as any;
-let mediaStream: any;
-let mediaRecorder: any;
 
 export enum RecordMode {
     PressAndHold,
@@ -34,35 +31,6 @@ export class Recorder {
         this.isRecording = false;
     }
 
-    public initWebcam(videoID: string) {
-        nav.getUserMedia  = nav.getUserMedia || nav.webkitGetUserMedia ||
-                            nav.mozGetUserMedia || nav.msGetUserMedia;
-        
-        this.videoID = videoID;
-
-        if (nav.getUserMedia) {
-            nav.getUserMedia({audio: false, video: true},
-                (stream: any) => {
-                    let video = document.getElementById(videoID) as any;
-                    video.src = window.URL.createObjectURL(stream);
-                    mediaStream = stream;
-
-                    mediaRecorder = new MediaStreamRecorder(stream);
-                    mediaRecorder.mimeType = 'video/mp4';
-                }, () => {
-                    console.error('unable to initialize webcam');
-                });
-        }
-    }
-
-    public PauseWebcam() {
-        mediaStream.stop();
-    }
-
-    public ResumeWebcam() {
-        this.initWebcam(this.videoID);
-    }
-
     public initRecordButton(btnID: string) {
         this.recordBtn = Viz.d3.select("#" + btnID);
     }
@@ -74,8 +42,6 @@ export class Recorder {
                 this.sample = new GestureSample();
                 this.sample.startTime = Date.now();
                 this.sample.rawData.push(yt);
-                // start recording the video:
-                mediaRecorder.start(15 * 1000);
 
                 this.recordBtn.classed("green", true);
             } else if (this.wasRecording == true && this.isRecording == true) {
@@ -86,16 +52,6 @@ export class Recorder {
                 this.sample.endTime = Date.now();
                 this.sample.cropStartIndex = 0;
                 this.sample.cropEndIndex = this.sample.rawData.length - 1;
-
-                // stop recording the video
-                mediaRecorder.stop();
-
-                mediaRecorder.ondataavailable = (blob: any) => {
-                    let vid = window.URL.createObjectURL(blob);
-                    this.sample.videoLink = vid;
-                    this.sample.videoData = blob;
-                    this.onRecordHandler(this.gestureIndex, this.sample);
-                };
 
                 this.recordBtn.classed("green", false);
             }
@@ -163,12 +119,6 @@ export function parseString(strBuf: string): any {
 
             i += 3;
         }
-        // else if (strBufArray[i] == "M") {
-            // result.magVec = new Vector(parseInt(strBufArray[i + 1]), parseInt(strBufArray[i + 2]), parseInt(strBufArray[i + 3]));
-            // result.mag = true;
-
-            // i += 3;
-        // }
     }
 
     return result;
