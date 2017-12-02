@@ -1,6 +1,10 @@
 
 # pxt-gestures
 
+This is an experimental package to train and replay gesture recognizer on MakeCode editors. It is currently supported for the Adafruit Circuit Playground Express only.
+
+
+
 ## Building
 
 The root folder contains the pxt package that gets loaded in the MakeCode editor.
