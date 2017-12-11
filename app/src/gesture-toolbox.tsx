@@ -1,18 +1,14 @@
 /// <reference path="../node_modules/pxt-core/built/pxteditor.d.ts"/>
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as viz from "./visualizations";
-import { SingleDTWCore } from "./model";
+import { observer } from "mobx-react";
 import { GraphCard } from "./graphcard";
-import { Gesture, GestureSample, SignalReading } from "./gesture-data";
+import { Gesture, GestureSample } from "./gesture-data";
 import { GestureEditor } from "./gesture-editor";
 import { RecordedSamples } from "./recorded-samples";
 import { serialData } from "./serial-data";
 import { gestureStore } from "./gesture-store";
 
-
-export const gesturesContainerID: string = "gestures-container";
 
 
 
@@ -24,18 +20,14 @@ interface GestureToolboxState {
 }
 
 
-
+@observer
 export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
-    private intervalID: NodeJS.Timer;
     private gestureEditor: GestureEditor;
 
 
 
     constructor(props: {}) {
         super(props);
-
-        let data: Gesture[] = [];
-
         this.state = {
             visible: false,
             editGestureMode: false,
@@ -145,10 +137,8 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
 
 
 
-        const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const gestureContainerMargin = { margin: "0 15px 15px 0" };
         const headerStyle = { height: "60px" };
-        const buttonHeightStyle = { height: "30px" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
 
         return (
@@ -212,9 +202,7 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
                             :
                             <div>
                                 <GestureEditor
-                                    ref={ge => {
-                                        this.gestureEditor = ge;
-                                    }}
+                                    ref={ge => this.gestureEditor = ge}
                                     gesture={gestureStore.currentGesture}
                                     model={gestureStore.currentModel}
                                     connected={gestureStore.connected}

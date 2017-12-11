@@ -133,7 +133,7 @@ ${generatedCodeBlocks.join('\n')}
         let event_src_id_varName = `MY_EVENT_SRC${uniqueId}`;
         let initialized_varName = `__isInitialized${uniqueId}`;
         let initializePredictor_funName = `__initializePredictor${uniqueId}`;
-        let predictor_funName = `__predictor${uniqueId}`;
+        // let predictor_funName = `__predictor${uniqueId}`;
         let gesture_funName = `onGesture${functionName}`;
         let description = this.description;
 

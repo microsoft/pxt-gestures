@@ -1,3 +1,4 @@
+import { computed, observable, action } from "mobx";
 import { Gesture, SignalReading, GestureSample } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { serialData } from "./serial-data";
@@ -6,11 +7,11 @@ import { serialData } from "./serial-data";
 
 export class GestureStore {
     // contains all of the gesture data
-    private data: Gesture[] = [];
+    @observable private data: Gesture[] = [];
     // is the Circuit Playground streaming accelerometer data or not
-    public connected: boolean;
+    @observable public connected: boolean;
     // needs saving
-    public hasBeenModified: boolean = false;
+    @observable public hasBeenModified: boolean = false;
     private models: SingleDTWCore[] = [];
     private idToType: pxt.Map<string> = {};
     private extId: string;
@@ -20,32 +21,35 @@ export class GestureStore {
     constructor() {
         this.extId = window.location.hash.substr(1);
         console.log(`extension id: ${this.extId}`)
+        
         window.addEventListener(
             "message",
             ev => ev.data.type == "pxtpkgext" ? this.receiveMessage(ev.data) : undefined,
             false);
+
         this.sendRequest("extinit");
     }
 
-    public get currentModel() {
+    @computed public get currentModel() {
         return this.models[this.curGestureIndex];
     }
 
-    public get currentGesture() {
+    @computed public get currentGesture() {
         return this.data[this.curGestureIndex];
     }
 
-    public get gestures() {
+    @computed public get gestures() {
+        console.log("GESTURES", this.data);
         return this.data; // FIXME?
     }
 
 
-    public setCurrentGesture(gestureId: number): void {
+    @action public setCurrentGesture(gestureId: number): void {
         this.curGestureIndex = this.data.findIndex(g => g.gestureID === gestureId);
     }
 
 
-    public deleteSample(gesture: Gesture, sample: GestureSample) {
+    @action public deleteSample(gesture: Gesture, sample: GestureSample) {
         let cloneData = this.data.slice();
         const gi = this.data.indexOf(gesture);
         const si = this.data[gi].samples.indexOf(sample);
@@ -59,7 +63,7 @@ export class GestureStore {
         this.markDirty();
     }
 
-    public addSample(gesture: Gesture, newSample: GestureSample) {
+    @action public addSample(gesture: Gesture, newSample: GestureSample) {
         let cloneData = this.data.slice();
         const gestureIndex = this.data.indexOf(gesture);
         // do not change the order of the following lines:
@@ -71,7 +75,7 @@ export class GestureStore {
         this.markDirty();
     }
 
-    receiveMessage(data: pxt.editor.ExtensionMessage) {
+    private receiveMessage(data: pxt.editor.ExtensionMessage) {
         const ev = data as pxt.editor.ExtensionEvent;
         if (ev.event) {
             switch (ev.event) {
@@ -115,7 +119,7 @@ export class GestureStore {
     }
 
 
-    public sendRequest(action: string, body?: any) {
+    private sendRequest(action: string, body?: any) {
         const id = Math.random().toString();
         this.idToType[id] = action;
         const msg = {
@@ -135,7 +139,7 @@ export class GestureStore {
      * Initializes the serial port (using hid for the Circuit Playground) and sets the onSerialData event function
      * to update the realtime graph, feed the recorder, and feed the realtime DTW model (if it is running)
      */
-    onSerialData(strBuf: string) {
+    private onSerialData(strBuf: string) {
         const newData = parseString(strBuf);
         if (newData && newData.acc)
             serialData.notify(newData);
@@ -149,7 +153,7 @@ export class GestureStore {
      * updates this.state.data[] array and the models[] array with a 
      * new Gesture and switches to the editGesture window
      */
-    public addGesture() {
+    @action public addGesture() {
         this.data.push(new Gesture());
         // TODO: change this method of keeping the current gesture index to something more reliable
         this.curGestureIndex = this.data.length - 1;
@@ -183,13 +187,13 @@ export class GestureStore {
         }
     }
 
-    private loadBlocks(code: string, json: string) {
+    @action private loadBlocks(code: string, json: string) {
         if (!json) return;
 
         let gestures: Gesture[] = JSON.parse(json);
         if (!gestures) return;
 
-        let cloneData = []; // this.state.data.slice();
+        let cloneData: Gesture[] = []; // this.state.data.slice();
         this.models = [];
 
         gestures.forEach(importedGesture => {
@@ -197,7 +201,6 @@ export class GestureStore {
             parsedGesture.description = importedGesture.description;
             parsedGesture.name = importedGesture.name;
             parsedGesture.labelNumber = importedGesture.labelNumber;
-            if (!importedGesture.samples) importedGesture.samples = (<any>importedGesture).gestures; // name change
             for (let j = 0; j < importedGesture.samples.length; j++) {
                 parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
             }
@@ -209,6 +212,7 @@ export class GestureStore {
             this.models.push(newModel);
         })
         this.data = cloneData;
+        console.log("LOAD BLOCKS", this.data);
     }
 
     /**
@@ -236,7 +240,7 @@ export class GestureStore {
     /**
      * Removes the currently active gesture if it contains no samples
      */
-    deleteIfGestureEmpty() {
+    @action public deleteIfGestureEmpty() {
         if (this.data.length > 0 && this.data[this.curGestureIndex].samples.length == 0) {
             // delete the gesture
             let cloneData = this.data.slice();
@@ -259,7 +263,7 @@ export class GestureStore {
 function debounce(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
     let timeout: any;
     return function () {
-        let context = this
+        let context = this;
         let args = arguments;
         let later = function () {
             timeout = null;

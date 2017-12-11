@@ -1,5 +1,4 @@
 import { SignalReading, GestureSample, Gesture } from './gesture-data';
-import * as Viz from './visualizations';
 import * as d3 from 'd3';
 import * as React from 'react';
 import { serialData, SerialData } from './serial-data';
@@ -23,7 +22,7 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
     private wasRecording: boolean;
     private sample: GestureSample;
     private recordBtn: any;
-    private videoID: string;
+
 
     constructor(props: RecorderButtonProps) {
         super(props);

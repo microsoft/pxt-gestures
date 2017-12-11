@@ -2,7 +2,7 @@ import * as React from "react";
 import * as d3 from "d3";
 import { RecorderButton } from "./recorder";
 import { SignalPlot } from "./visualizations";
-import { Gesture, GestureSample, SignalReading, Match } from "./gesture-data";
+import { Gesture, GestureSample, Match } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { RecognitionOverlay } from "./visualizations";
 import { serialData, SerialData } from "./serial-data";
@@ -22,7 +22,6 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
     private plotY: SignalPlot;
     private graphZ: SignalPlot;
     private graphInitialized: boolean;
-    private recorderInitialized: boolean;
     private recognitionOverlay: RecognitionOverlay;
 
 
@@ -54,14 +53,11 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
      */
     resetGraph() {
         this.graphInitialized = false;
-        this.recorderInitialized = false;
     }
 
 
 
     public render() {
-
-        const colossalStyle = { fontSize: "3.5rem", margin: "0" };
 
         /**
          * This function is auotmatically called when the div containing the Realtime Graph is mounted (using react's ref attribute).

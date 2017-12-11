@@ -12,10 +12,11 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noImplicitThis": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "strictNullChecks": false,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": false
+    "noUnusedLocals": true,
+    "experimentalDecorators": true
   },
   "exclude": [
     "node_modules",
