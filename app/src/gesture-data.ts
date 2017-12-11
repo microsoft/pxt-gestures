@@ -10,7 +10,7 @@ export class Point {
 
 
 export class Gesture {
-    public gestures: GestureSample[];
+    public samples: GestureSample[];
     public labelNumber: number;
     public name: string;
     public description: string;
@@ -19,21 +19,21 @@ export class Gesture {
     public gestureID: number;
 
     constructor() {
-        this.gestures = [];
+        this.samples = [];
         this.displayGesture = new GestureSample();
         this.gestureID = Gesture.id++;
         this.name = "gesture " + this.gestureID.toString();
         this.description = "description of this gesture will be here. it's a great and wonderful gesture. you won't be dissapointed " + this.gestureID.toString();
     }
 
-    public getCroppedData(): Vector[][] {
-        let all_data: Vector[][] = [];
+    public getCroppedData(): SignalReading[][] {
+        let all_data: SignalReading[][] = [];
 
-        for (let i = 0; i < this.gestures.length; i++) {
-            let sample: Vector[] = [];
+        for (let i = 0; i < this.samples.length; i++) {
+            let sample: SignalReading[] = [];
 
-            for (let j = this.gestures[i].cropStartIndex; j <= this.gestures[i].cropEndIndex; j++) {
-                sample.push(this.gestures[i].rawData[j].Clone());
+            for (let j = this.samples[i].cropStartIndex; j <= this.samples[i].cropEndIndex; j++) {
+                sample.push(this.samples[i].rawData[j].Clone());
             }
 
             all_data.push(sample);
@@ -45,7 +45,7 @@ export class Gesture {
 
 
 export class GestureSample {
-    public rawData: Vector[];
+    public rawData: SignalReading[];
     public videoLink: any;
     public videoData: any;
     public startTime: number;
@@ -79,7 +79,7 @@ export class GestureSample {
 }
 
 
-export class Vector {
+export class SignalReading {
     public X: number;
     public Y: number;
     public Z: number;
@@ -91,7 +91,7 @@ export class Vector {
     }
 
     public Clone() {
-        return new Vector(this.X, this.Y, this.Z);
+        return new SignalReading(this.X, this.Y, this.Z);
     }
 }
 

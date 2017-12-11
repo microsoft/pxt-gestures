@@ -1,15 +1,17 @@
 import * as Algorithms from './algorithms';
-import { Vector, Match, GestureSample } from './types';
+import { SignalReading, Match, GestureSample } from './gesture-data';
+
+
 
 export class SingleDTWCore {
     private classNumber: number;
     private gestureName: string;
     private description: string;
 
-    private dtw: Algorithms.DTW<Vector>;
-    private dba: Algorithms.DBA<Vector>;
+    private dtw: Algorithms.DTW<SignalReading>;
+    private dba: Algorithms.DBA<SignalReading>;
 
-    private refPrototype: Vector[];
+    private refPrototype: SignalReading[];
     public threshold: number;
     public avgLength: number;
 
@@ -34,7 +36,7 @@ export class SingleDTWCore {
 
     constructor(classNum: number, gestureName: string) {
         this.classNumber = classNum;
-        this.dba = new Algorithms.DBA<Vector>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
+        this.dba = new Algorithms.DBA<SignalReading>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
         this.running = false;
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
@@ -56,7 +58,7 @@ export class SingleDTWCore {
     }
 
 
-    public Update(data: Vector[][]) {
+    public Update(data: SignalReading[][]) {
         if (data.length == 0) {
             // reset
             this.running = false;
@@ -67,8 +69,8 @@ export class SingleDTWCore {
             return;
         }
         // split data
-        let trainData: Vector[][] = [];
-        let thresholdData: Vector[][] = [];
+        let trainData: SignalReading[][] = [];
+        let thresholdData: SignalReading[][] = [];
         let lengthSum = 0;
 
         for (let i = 0; i < data.length; i++) {
@@ -85,7 +87,7 @@ export class SingleDTWCore {
 
         // update the Spring algorithm
         // reset the Spring algorithm
-        this.dtw = new Algorithms.DTW<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        this.dtw = new Algorithms.DTW<SignalReading>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
         this.running = true;
     }
 
@@ -102,7 +104,7 @@ export class SingleDTWCore {
     }
 
 
-    public Feed(xt: Vector): Match {
+    public Feed(xt: SignalReading): Match {
         return this.dtw.Feed(xt);
     }
 
@@ -177,7 +179,7 @@ ${generatedCodeBlocks.join('\n')}
     }
 
 
-    private vecArrayToString(vec: Vector[]): string {
+    private vecArrayToString(vec: SignalReading[]): string {
         return '[' + vec.map(v => `new Vector(${v.X}, ${v.Y}, ${v.Z})`).join(',\n') + ']';
     }
 }

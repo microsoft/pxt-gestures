@@ -1,19 +1,19 @@
-import { Vector, Match } from './types';
+import { SignalReading, Match } from './gesture-data';
 
 
-export function EuclideanDistance(a: Vector, b: Vector): number {
+export function EuclideanDistance(a: SignalReading, b: SignalReading): number {
     // L2 Norm:
     return Math.sqrt(Math.pow(a.X - b.X, 2) + Math.pow(a.Y - b.Y, 2) + Math.pow(a.Z - b.Z, 2));
 }
 
 
-export function ManhattanDistance(a: Vector, b: Vector): number {
+export function ManhattanDistance(a: SignalReading, b: SignalReading): number {
     // L1 Distance:
     return Math.abs(a.X - b.X) + Math.abs(a.Y - b.Y) + Math.abs(a.Z - b.Z);
 }
 
 
-export function EuclideanDistanceFast(a: Vector, b: Vector): number {
+export function EuclideanDistanceFast(a: SignalReading, b: SignalReading): number {
     // L2 Norm:
     return IntegerSqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) + (a.Z - b.Z) * (a.Z - b.Z));
 }
@@ -433,8 +433,8 @@ export class DBA<SampleType> {
     }
 }
 
-export function Average(inp: Vector[]): Vector {
-    let mean = new Vector(0, 0, 0);
+export function Average(inp: SignalReading[]): SignalReading {
+    let mean = new SignalReading(0, 0, 0);
 
     for (let i = 0; i < inp.length; i++) {
         mean.X += inp[i].X;
@@ -449,45 +449,45 @@ export function Average(inp: Vector[]): Vector {
     return mean;
 }
 
-export function roundVecArray(data: Vector[]): Vector[] {
-    let roundedVec: Vector[] = [];
+export function roundVecArray(data: SignalReading[]): SignalReading[] {
+    let roundedVec: SignalReading[] = [];
 
     for (let i = 0; i < data.length; i++)
-        roundedVec.push(new Vector(Math.round(data[i].X), Math.round(data[i].Y), Math.round(data[i].Z)));
+        roundedVec.push(new SignalReading(Math.round(data[i].X), Math.round(data[i].Y), Math.round(data[i].Z)));
 
     return roundedVec;
 }
 
-export function ComputeVarianceVec(protoArray: Vector[][]): number {
-    let sum = new Vector(0, 0, 0);
-    let sumSquares = new Vector(0, 0, 0);
+export function ComputeVarianceVec(protoArray: SignalReading[][]): number {
+    let sum = new SignalReading(0, 0, 0);
+    let sumSquares = new SignalReading(0, 0, 0);
     let size = 0;
 
     for (let i = 0; i < protoArray.length; i++) {
         size += protoArray[i].length;
 
         for (let j = 0; j < protoArray[i].length; j++) {
-            sum = new Vector(sum.X + protoArray[i][j].X,
+            sum = new SignalReading(sum.X + protoArray[i][j].X,
                 sum.Y + protoArray[i][j].Y,
                 sum.Z + protoArray[i][j].Z);
 
-            sumSquares = new Vector(sumSquares.X + Math.pow(protoArray[i][j].X, 2),
+            sumSquares = new SignalReading(sumSquares.X + Math.pow(protoArray[i][j].X, 2),
                 sumSquares.Y + Math.pow(protoArray[i][j].Y, 2),
                 sumSquares.Z + Math.pow(protoArray[i][j].Z, 2));
         }
     }
 
-    let variance = new Vector(((sumSquares.X - (Math.pow(sum.X, 2) / size)) / size),
+    let variance = new SignalReading(((sumSquares.X - (Math.pow(sum.X, 2) / size)) / size),
         ((sumSquares.Y - (Math.pow(sum.Y, 2) / size)) / size),
         ((sumSquares.Z - (Math.pow(sum.Z, 2) / size)) / size));
 
-    return EuclideanDistance(variance, new Vector(0, 0, 0));
+    return EuclideanDistance(variance, new SignalReading(0, 0, 0));
 }
 
-export function findMinimumThreshold(prototypeArray: Vector[][],
-    referencePrototype: Vector[],
+export function findMinimumThreshold(prototypeArray: SignalReading[][],
+    referencePrototype: SignalReading[],
     avgLen: number,
-    distFun: (a: Vector, b: Vector) => number,
+    distFun: (a: SignalReading, b: SignalReading) => number,
     step: number,
     maxStep: number): number {
     // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
@@ -501,14 +501,14 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
 
     do {
         // TODO: make it more efficient by adding RESET function and accessors for the threshold 
-        let spring = new DTW<Vector>(referencePrototype, threshold, 1, avgLen, distFun);
+        let spring = new DTW<SignalReading>(referencePrototype, threshold, 1, avgLen, distFun);
 
         let time = 0;
 
         for (let k = 0; k < prototypeArray.length; k++) {
             // run some random data
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.Feed(new SignalReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }
@@ -522,7 +522,7 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
             let te = time;
 
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.Feed(new SignalReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }

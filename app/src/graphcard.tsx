@@ -2,36 +2,34 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
 export const d3 = require('d3');
-import { Gesture, GestureSample } from "./types";
+import { Gesture, GestureSample } from "./gesture-data";
 
-export interface IGraphCard { editable: boolean, parent: any, data?: GestureSample, gestureID?: number, sampleID?: number, dx: number, graphHeight: number, maxVal: number, onDeleteHandler?: (gid: number, sid: number) => void, onCropHandler?: (gid: number, sid: number, s: number, e: number) => void, style?: any }
+
+export interface GraphCardProps {
+    editable: boolean;
+    gesture: Gesture;
+    sample: GestureSample;
+    dx: number;
+    graphHeight: number;
+    maxVal: number;
+    onDeleteHandler?: (g: Gesture, s: GestureSample) => void,
+    onCropHandler?: (g: Gesture, s: GestureSample, newStart: number, newEnd: number) => void,
+    style?: any
+}
+
 export interface GraphCardState { editMode?: boolean }
 
-export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
+export class GraphCard extends React.Component<GraphCardProps, GraphCardState> {
     // TODO: get rid of these unnecessary global variables
     private parentData: Gesture[];
-    private sample: GestureSample;
     private svgX: any;
     private svgY: any;
     private svgZ: any;
     private svgCrop: any;
 
-    constructor(props: IGraphCard) {
+    constructor(props: GraphCardProps) {
         super(props);
-        // init
-        this.props = props;
-
-        if (this.props.editable) {
-            this.parentData = props.parent.state.data;
-
-            let gid = this.getGestureIndex(props.gestureID || 0);
-            let sid = this.getSampleIndex(gid, props.sampleID || 0);
-
-            this.sample = props.parent.state.data[gid].gestures[sid];
-        } else this.sample = props.data as GestureSample;
-
         this.state = { editMode: false };
         this.handleDelete = this.handleDelete.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
@@ -47,8 +45,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     }
 
     getSampleIndex(gid: number, sid: number): number {
-        for (let i = 0; i < this.parentData[gid].gestures.length; i++) {
-            if (this.parentData[gid].gestures[i].sampleID == sid) return i;
+        for (let i = 0; i < this.parentData[gid].samples.length; i++) {
+            if (this.parentData[gid].samples[i].sampleID == sid) return i;
         }
 
         return -1;
@@ -59,7 +57,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     }
 
     handleDelete(e: any) {
-        this.props.onDeleteHandler(this.props.gestureID || 0, this.props.sampleID || 0);
+        this.props.onDeleteHandler(this.props.gesture, this.props.sample);
     }
 
     handleEdit(e: any) {
@@ -70,7 +68,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // let svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
         // let svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
-        this.updateClipper(0, this.sample.rawData.length, true);
+        this.updateClipper(0, this.props.sample.rawData.length, true);
         this.svgCrop.transition().duration(150).delay(150).style("opacity", 1);
     }
 
@@ -80,9 +78,9 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         // the handler will change the state of itself (=parent)
 
         // re-render based on
-        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex + 1, true);
+        this.updateClipper(this.props.sample.cropStartIndex, this.props.sample.cropEndIndex + 1, true);
         this.svgCrop.style("opacity", 0);
-        this.props.onCropHandler(this.props.gestureID || 0, this.props.sampleID || 0, this.sample.cropStartIndex, this.sample.cropEndIndex);
+        this.props.onCropHandler(this.props.gesture, this.props.sample, this.props.sample.cropStartIndex, this.props.sample.cropEndIndex);
     }
 
     // on "edit" click 
@@ -121,7 +119,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
     componentDidMount() {
         // displays the graph and initializes all of the SVGs to be used in other places.
-        let width = this.sample.rawData.length * this.props.dx;
+        let width = this.props.sample.rawData.length * this.props.dx;
         let height = this.props.graphHeight;
 
         let y = d3.scaleLinear()
@@ -147,10 +145,10 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         let dataY: number[] = [];
         let dataZ: number[] = [];
 
-        for (let i = 0; i < this.sample.rawData.length; i++) {
-            dataX.push(y(constrain(this.sample.rawData[i].X)));
-            dataY.push(y(constrain(this.sample.rawData[i].Y)));
-            dataZ.push(y(constrain(this.sample.rawData[i].Z)));
+        for (let i = 0; i < this.props.sample.rawData.length; i++) {
+            dataX.push(y(constrain(this.props.sample.rawData[i].X)));
+            dataY.push(y(constrain(this.props.sample.rawData[i].Y)));
+            dataZ.push(y(constrain(this.props.sample.rawData[i].Z)));
         }
 
         d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"])).
@@ -194,15 +192,15 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("height", svgCropHeight)
             .attr("style", "background: rgba(0, 0, 0, 0); position: absolute; top: 16px;");
 
-        let localThis = this;
+        let sample = this.props.sample;
         let dx = this.props.dx;
 
         function dragLeft(d: any) {
             if (d3.event.x > 0 && d3.event.x < svgCropWidth) {
                 let startIndex = Math.round(d3.event.x / dx);
 
-                if (startIndex < localThis.sample.cropEndIndex) {
-                    localThis.sample.cropStartIndex = startIndex;
+                if (startIndex < sample.cropEndIndex) {
+                    sample.cropStartIndex = startIndex;
 
                     d3.select(this).transition().duration(60).attr("d", "M" + ((startIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
                     d3.select(this.parentNode).select(".leftRec").transition().duration(60).attr("width", (startIndex * dx));
@@ -214,8 +212,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             if (d3.event.x > 0 && d3.event.x < svgCropWidth) {
                 let endIndex = Math.round(d3.event.x / dx);
 
-                if (endIndex > localThis.sample.cropStartIndex) {
-                    localThis.sample.cropEndIndex = endIndex;
+                if (endIndex > sample.cropStartIndex) {
+                    sample.cropEndIndex = endIndex;
 
                     d3.select(this).transition().duration(60).attr("d", "M" + ((endIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
                     d3.select(this.parentNode).select(".RightRec").transition().duration(60).attr("width", svgCropWidth - (endIndex * dx)).attr("x", (endIndex * dx));
@@ -257,10 +255,10 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // modify width and translateX based on 
         // width = 32 => 0
-        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex + 1);
+        this.updateClipper(this.props.sample.cropStartIndex, this.props.sample.cropEndIndex + 1);
     }
 
-    shouldComponentUpdate(nextProps: IGraphCard, nextState: GraphCardState, nextContext: any): boolean {
+    shouldComponentUpdate(nextProps: GraphCardProps, nextState: GraphCardState, nextContext: any): boolean {
         return this.state.editMode != nextState.editMode;
     }
 
@@ -300,10 +298,4 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             </div>
         );
     }
-}
-
-export interface IGraphCard { }
-export interface GestureCardState { }
-
-export class GestureCard extends React.Component<IGraphCard, GraphCardState> {
 }

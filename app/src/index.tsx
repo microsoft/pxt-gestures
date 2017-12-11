@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as gesture from "./gesture"
+import * as gesture from "./gesture-toolbox"
 import './index.css';
 
 ReactDOM.render(

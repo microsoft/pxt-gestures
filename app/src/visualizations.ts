@@ -1,8 +1,8 @@
-import { Match } from './types';
+import { Match } from './gesture-data';
+import * as d3 from 'd3';
 
-export const d3 = require('d3');
 
-export class RealTimeGraph {
+export class SignalPlot {
     // TODO: merge different line types into functions (instead of repeating them inside each function)
     // private graphDiv: any;
     // private graphSvg: any;
@@ -22,26 +22,22 @@ export class RealTimeGraph {
     private path: any;
 
 
-    constructor(svg: any, width: number, height: number, maxVal: number, dx: number, color: string) {
+    constructor(svg: d3.Selection<SVGElement, {}, null, undefined>, width: number, height: number, maxVal: number, dx: number, color: string) {
         this.dx = dx;
         this.maxVal = maxVal;
         // this.width = width;
         this.height = height;
 
-        let y = d3.scaleLinear()
+        let yScale = d3.scaleLinear()
             .domain([-maxVal, +maxVal])
             .range([height, 0]);
 
         for (let i = 0; i < Math.round(width / dx); i++)
-            this.data.push(y(0));
+            this.data.push(yScale(0));
 
-        let smoothedLine = d3.line()
-            .x((d: number, i: number) => {
-                return i * dx;
-            })
-            .y((d: number, i: number) => {
-                return d;
-            })
+        let smoothedLine = d3.line<number>()
+            .x((_, i) => i * dx)
+            .y((d, _) => d)
             .curve(d3.curveCardinal);
 
         svg.attr("width", width)
@@ -64,19 +60,15 @@ export class RealTimeGraph {
 
         this.data.push(y(yt));
 
-        let smoothedLine = d3.line()
-            .x((d: number, i: number) => {
-                return i * this.dx;
-            })
-            .y((d: number, i: number) => {
-                return d;
-            })
+        let smoothedLine = d3.line<number>()
+            .x((_, i) => i * this.dx)
+            .y((d, _) => d)
             .curve(d3.curveCardinal);
 
         this.path.attr("d", smoothedLine(this.data))
             .attr("transform", null)
             .transition()
-                .attr("transform", "translate(" + -this.dx + ")");
+            .attr("transform", "translate(" + -this.dx + ")");
 
         this.data.shift();
     }
@@ -100,7 +92,7 @@ export class RecognitionOverlay {
         this.activeMatches = [];
         this.activeRectangles = [];
         this.tickCount = [];
-        
+
 
         svg.attr("width", this.overlayWidth)
             .attr("height", this.overlayHeight)
@@ -116,7 +108,7 @@ export class RecognitionOverlay {
             .attr("width", width) // TODO: should initialize all of these with the cropStart/End values
             .attr("height", this.overlayHeight)
             .attr("fill", "rgba(0, 255, 0, 0.25)");
-        
+
         this.activeMatches.push(match);
         this.activeRectangles.push(rect);
         this.tickCount.push(0);
@@ -129,7 +121,7 @@ export class RecognitionOverlay {
             if (curTick - this.activeMatches[i].Te >= this.overlayWidth / this.dx) {
                 // remove rectangle from DOM
                 this.activeRectangles[i].remove();
-                
+
                 this.activeRectangles.splice(i, 1);
                 this.activeMatches.splice(i, 1);
                 this.tickCount.splice(i, 1);
