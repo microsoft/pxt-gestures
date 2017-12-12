@@ -7,7 +7,7 @@ import { serialData } from "./serial-data";
 
 export class GestureStore {
     // contains all of the gesture data
-    @observable private data: Gesture[] = [];
+    @observable public gestures: Gesture[] = [];
     // is the Circuit Playground streaming accelerometer data or not
     @observable public connected: boolean;
     // needs saving
@@ -35,43 +35,38 @@ export class GestureStore {
     }
 
     @computed public get currentGesture() {
-        return this.data[this.curGestureIndex];
-    }
-
-    @computed public get gestures() {
-        console.log("GESTURES", this.data);
-        return this.data; // FIXME?
+        return this.gestures[this.curGestureIndex];
     }
 
 
     @action public setCurrentGesture(gestureId: number): void {
-        this.curGestureIndex = this.data.findIndex(g => g.gestureID === gestureId);
+        this.curGestureIndex = this.gestures.findIndex(g => g.gestureID === gestureId);
     }
 
 
     @action public deleteSample(gesture: Gesture, sample: GestureSample) {
-        let cloneData = this.data.slice();
-        const gi = this.data.indexOf(gesture);
-        const si = this.data[gi].samples.indexOf(sample);
+        let cloneData = this.gestures.slice();
+        const gi = this.gestures.indexOf(gesture);
+        const si = this.gestures[gi].samples.indexOf(sample);
 
         cloneData[gi].samples.splice(si, 1);
-        const model = this.models[gesture.gestureID];
+        const model = this.models[gi];
         model.Update(cloneData[gi].getCroppedData());
         cloneData[gi].displayGesture = model.GetMainPrototype();
 
-        this.data = cloneData;
+        this.gestures = cloneData;
         this.markDirty();
     }
 
     @action public addSample(gesture: Gesture, newSample: GestureSample) {
-        let cloneData = this.data.slice();
-        const gestureIndex = this.data.indexOf(gesture);
+        let cloneData = this.gestures.slice();
+        const gestureIndex = this.gestures.indexOf(gesture);
         // do not change the order of the following lines:
         cloneData[gestureIndex].samples.push(newSample);
         gestureStore.currentModel.Update(cloneData[gestureIndex].getCroppedData());
         cloneData[gestureIndex].displayGesture = gestureStore.currentModel.GetMainPrototype();
 
-        this.data = cloneData;
+        this.gestures = cloneData;
         this.markDirty();
     }
 
@@ -154,10 +149,10 @@ export class GestureStore {
      * new Gesture and switches to the editGesture window
      */
     @action public addGesture() {
-        this.data.push(new Gesture());
+        this.gestures.push(new Gesture());
         // TODO: change this method of keeping the current gesture index to something more reliable
-        this.curGestureIndex = this.data.length - 1;
-        this.models.push(new SingleDTWCore(this.data[this.curGestureIndex].gestureID + 1, this.data[this.curGestureIndex].name));
+        this.curGestureIndex = this.gestures.length - 1;
+        this.models.push(new SingleDTWCore(this.gestures[this.curGestureIndex].gestureID + 1, this.gestures[this.curGestureIndex].name));
     }
 
 
@@ -167,17 +162,17 @@ export class GestureStore {
      */
     public saveBlocks() {
         if (!this.hasBeenModified) return;
-        let cloneData = this.data.slice();
+        let cloneData = this.gestures.slice();
 
         const codeBlocks: string[] = this.models
             .filter(m => m.isRunning())
             .map(m => m.GenerateBlock());
         const code = SingleDTWCore.GenerateNamespace(codeBlocks);
-        const json = JSON.stringify(this.data, null, 2);
+        const json = JSON.stringify(this.gestures, null, 2);
         this.sendRequest("extwritecode", { code, json });
         this.hasBeenModified = false;
 
-        this.data = cloneData; // FIXME: Why did Majeed do this?
+        this.gestures = cloneData; // FIXME: Why did Majeed do this?
     }
 
     markDirty() {
@@ -210,9 +205,8 @@ export class GestureStore {
             let newModel = new SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
             newModel.Update(cloneData[curIndex].getCroppedData());
             this.models.push(newModel);
-        })
-        this.data = cloneData;
-        console.log("LOAD BLOCKS", this.data);
+        });
+        this.gestures = cloneData;
     }
 
     /**
@@ -241,13 +235,13 @@ export class GestureStore {
      * Removes the currently active gesture if it contains no samples
      */
     @action public deleteIfGestureEmpty() {
-        if (this.data.length > 0 && this.data[this.curGestureIndex].samples.length == 0) {
+        if (this.gestures.length > 0 && this.gestures[this.curGestureIndex].samples.length == 0) {
             // delete the gesture
-            let cloneData = this.data.slice();
+            let cloneData = this.gestures.slice();
             cloneData.splice(this.curGestureIndex, 1);
             // delete the model
             this.models.splice(this.curGestureIndex, 1);
-            this.data = cloneData;
+            this.gestures = cloneData;
         }
     }
 

@@ -4,6 +4,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 export const d3 = require('d3');
 import { Gesture, GestureSample } from "./gesture-data";
+import { observer } from "mobx-react";
 
 
 export interface GraphCardProps {
@@ -20,6 +21,9 @@ export interface GraphCardProps {
 
 export interface GraphCardState { editMode?: boolean }
 
+
+
+@observer
 export class GraphCard extends React.Component<GraphCardProps, GraphCardState> {
     // TODO: get rid of these unnecessary global variables
     private parentData: Gesture[];

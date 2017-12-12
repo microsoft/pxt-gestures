@@ -1,3 +1,5 @@
+import { observable } from "mobx";
+
 export class Point {
     public X: number;
     public Y: number;
@@ -10,7 +12,7 @@ export class Point {
 
 
 export class Gesture {
-    public samples: GestureSample[];
+    @observable public samples: GestureSample[];
     public labelNumber: number;
     public name: string;
     public description: string;

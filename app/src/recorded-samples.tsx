@@ -2,6 +2,7 @@ import * as React from "react";
 import { GraphCard } from "./graphcard";
 import { Gesture, GestureSample } from "./gesture-data";
 import { SingleDTWCore } from "./model";
+import { observer } from "mobx-react";
 
 
 export interface RecordedSamplesProps {
@@ -11,6 +12,7 @@ export interface RecordedSamplesProps {
 }
 
 
+@observer
 export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
 
 
@@ -19,20 +21,19 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
      * This function will make sure that the scrollbar would not get wider than the GestureToolbox container
      */
     private updateScrollbar() {
-        // focus the scrollbar on the latest sample
-        let scrollBarDiv = document.getElementById("gestures-fluid-container");
-        scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
+        // // focus the scrollbar on the latest sample
+        // let scrollBarDiv = document.getElementById("gestures-fluid-container");
+        // scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
 
-        // resize the scrollbar based on the window size:
-        const recordedGestures = document.getElementById("recorded-samples");
-        if (!recordedGestures) return;
-        let totalWidth = recordedGestures.offsetWidth;
-        const displayGestures = document.getElementById("display-gesture");
-        if (!displayGestures) return;
-        let dispGestureWidth = displayGestures.offsetWidth;
-        let samplesContainerWidth = totalWidth - dispGestureWidth - 40;
+        // // resize the scrollbar based on the window size:
+        // const samplesDiv = document.getElementById("recorded-samples");
+        // const displayDiv = document.getElementById("display-gesture");
+        // if (!samplesDiv || !displayDiv) return;
 
-        scrollBarDiv.style.width = samplesContainerWidth + "px";
+        // let totalWidth = samplesDiv.offsetWidth;
+        // let displayWidth = displayDiv.offsetWidth;
+        // let samplesContainerWidth = totalWidth - displayWidth - 40;
+        // scrollBarDiv.style.width = samplesContainerWidth + "px";
     }
 
 
@@ -79,8 +80,8 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
 
         return (
             <div id="recorded-samples">
-                <div className="ui segments" id="display-gesture">
-                    <div className="ui segment inverted teal" style={headerStyle}>
+                <div className="ui" id="display-gesture">
+                    <div className="ui inverted teal" style={headerStyle}>
                         <div className="ui action input left floated">
                             <input
                                 style={inputStyle}
@@ -93,7 +94,7 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
                             />
                         </div>
                     </div>
-                    <div className="ui segment">
+                    <div className="ui">
                         <div className="ui grid">
                             {
                                 this.props.gesture.samples.length == 0 ?

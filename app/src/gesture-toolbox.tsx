@@ -8,21 +8,17 @@ import { GestureEditor } from "./gesture-editor";
 import { RecordedSamples } from "./recorded-samples";
 import { serialData } from "./serial-data";
 import { gestureStore } from "./gesture-store";
+import { observable } from "mobx";
 
 
-
-
-interface GestureToolboxState {
-    // show or hide the GestureToolbox
-    visible?: boolean;
-    // switch between the edit gesture mode and the main gesture view containing all of the recorded and imported gestures
-    editGestureMode?: boolean;
-}
 
 
 @observer
-export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
+export class GestureToolbox extends React.Component<{}, {}> {
     private gestureEditor: GestureEditor;
+    @observable private visible?: boolean;
+    // switch between the edit gesture mode and the main gesture view containing all of the recorded and imported gestures
+    @observable editGestureMode?: boolean;
 
 
 
@@ -52,7 +48,8 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
         // though it will not reload if there were no changes to any of the gestures
         gestureStore.saveBlocks();
 
-        this.setState({ visible: false, editGestureMode: false });
+        this.visible = false;
+        this.editGestureMode = false;
         if (this.gestureEditor)
             this.gestureEditor.resetGraph();
 
@@ -61,7 +58,7 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
 
 
     show() {
-        this.setState({ visible: true });
+        this.visible = true;
     }
 
 
@@ -79,6 +76,7 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
             if (this.gestureEditor)
                 this.gestureEditor.resetGraph();
             gestureStore.deleteIfGestureEmpty();
+            this.editGestureMode = false;
         }
 
         /**
@@ -86,7 +84,7 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
          * new Gesture and switches to the editGesture window
          */
         const newGesture = () => {
-            this.setState({ editGestureMode: true });
+            this.editGestureMode = true;
             if (this.gestureEditor)
                 this.gestureEditor.resetGraph();
             gestureStore.addGesture();
@@ -98,7 +96,7 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
          * @param gestureID the unique gesture id to switch to
          */
         const editGesture = (gestureID: number) => {
-            this.setState({ editGestureMode: true });
+            this.editGestureMode = true;
             if (this.gestureEditor)
                 this.gestureEditor.resetGraph();
             gestureStore.setCurrentGesture(gestureID);
@@ -144,9 +142,8 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
         return (
             <div className="ui">
                 <div className="ui segment">
-                    {this.state.editGestureMode
-                        ?
-                        <button className="ui button icon huge clear" id="back-btn" onClick={() => backToMain()}>
+                    {this.editGestureMode ?
+                        <button className="ui button icon huge clear" id="back-btn" onClick={backToMain}>
                             <i className="icon chevron left large"></i>
                         </button>
                         : undefined
@@ -155,10 +152,10 @@ export class GestureToolbox extends React.Component<{}, GestureToolboxState> {
                 </div>
                 <div className="ui segment bottom attached tab active tabsegment">
                     {
-                        !this.state.editGestureMode ?
+                        !this.editGestureMode ?
                             <div className="ui">
                                 <div className="ui buttons">
-                                    <button className="ui button primary" onClick={() => newGesture()}>
+                                    <button className="ui button primary" onClick={newGesture}>
                                         New Gesture...
                                     </button>
                                 </div>

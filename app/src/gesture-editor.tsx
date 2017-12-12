@@ -6,6 +6,7 @@ import { Gesture, GestureSample, Match } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { RecognitionOverlay } from "./visualizations";
 import { serialData, SerialData } from "./serial-data";
+import { observer } from "mobx-react";
 
 
 export interface GestureEditorProps {
@@ -16,12 +17,11 @@ export interface GestureEditorProps {
 }
 
 
-
+@observer
 export class GestureEditor extends React.Component<GestureEditorProps, {}> {
     private plotX: SignalPlot;
     private plotY: SignalPlot;
-    private graphZ: SignalPlot;
-    private graphInitialized: boolean;
+    private plotZ: SignalPlot;
     private recognitionOverlay: RecognitionOverlay;
 
 
@@ -35,7 +35,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
         if (!this.plotX) return;
         this.plotX.update(newData.accVec.X);
         this.plotY.update(newData.accVec.Y);
-        this.graphZ.update(newData.accVec.Z);
+        this.plotZ.update(newData.accVec.Z);
     }
 
     public newMatch(match: Match) {
@@ -52,7 +52,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
      * editing a gesture or creating a new gesture when changing the component's state back to {editGesture: true}
      */
     resetGraph() {
-        this.graphInitialized = false;
+        this.plotX = this.plotY = this.plotZ = undefined;
     }
 
 
@@ -66,7 +66,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
          * @param elem points to the div containing the Realtime Graph 
          */
         const initGraph = (elem: HTMLDivElement) => {
-            if (elem != null && !this.graphInitialized) {
+            if (elem && !this.plotX) {
                 // initialize SVG
                 let graph = d3.select(elem);
 
@@ -81,12 +81,11 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
 
                 this.plotX = new SignalPlot(svgX_rt, width, height, maxVal, dx, "red");
                 this.plotY = new SignalPlot(svgY_rt, width, height, maxVal, dx, "green");
-                this.graphZ = new SignalPlot(svgZ_rt, width, height, maxVal, dx, "blue");
+                this.plotZ = new SignalPlot(svgZ_rt, width, height, maxVal, dx, "blue");
 
                 this.recognitionOverlay = new RecognitionOverlay(
                     graph.select<SVGElement>("#recognition-overlay"), width, height, dx);
 
-                this.graphInitialized = true;
             }
         }
 

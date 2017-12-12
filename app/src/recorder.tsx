@@ -2,6 +2,7 @@ import { SignalReading, GestureSample, Gesture } from './gesture-data';
 import * as d3 from 'd3';
 import * as React from 'react';
 import { serialData, SerialData } from './serial-data';
+import { observer } from 'mobx-react';
 
 
 export enum RecordMode {
@@ -15,6 +16,7 @@ export interface RecorderButtonProps {
 }
 
 
+@observer
 export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
     private recordMode = RecordMode.PressAndHold;
     private enabled: boolean;
