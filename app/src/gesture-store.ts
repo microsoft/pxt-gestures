@@ -82,7 +82,7 @@ export class GestureStore {
                     break;
                 case "extshown":
                     console.log('pxt-gestures shown')
-                    this.connected = false;
+                    this.connected = true;
                     this.sendRequest("extdatastream");
                     this.sendRequest("extreadcode")
                     break;

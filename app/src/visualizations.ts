@@ -66,9 +66,9 @@ export class SignalPlot {
             .curve(d3.curveCardinal);
 
         this.path.attr("d", smoothedLine(this.data))
-            .attr("transform", null)
-            .transition()
-            .attr("transform", "translate(" + -this.dx + ")");
+        //     .attr("transform", null)
+        //     .transition()
+        //     .attr("transform", "translate(" + -this.dx + ")");
 
         this.data.shift();
     }

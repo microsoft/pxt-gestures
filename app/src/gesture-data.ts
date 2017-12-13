@@ -13,10 +13,11 @@ export class Point {
 
 export class Gesture {
     @observable public samples: GestureSample[];
-    public labelNumber: number;
-    public name: string;
-    public description: string;
-    public displayGesture: GestureSample;
+    @observable public labelNumber: number;
+    @observable public name: string;
+    @observable public description: string;
+    @observable public displayGesture: GestureSample;
+    
     private static id: number = 0;
     public gestureID: number;
 

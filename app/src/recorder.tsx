@@ -33,6 +33,9 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
         this.isRecording = false;
         this.onSerialData = this.onSerialData.bind(this);
         serialData.register(this.onSerialData);
+    }
+
+    componentDidMount() {
         this.SetRecordingMethod(this.recordMode);
     }
 
@@ -73,29 +76,33 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
     public SetRecordingMethod(recordMode: RecordMode) {
         this.recordMode = recordMode;
 
+        const forMe = () => document.activeElement.tagName.toLowerCase() !== 'input';
+
         if (recordMode == RecordMode.PressAndHold) {
             // assign events to capture if recording or not
-            window.onkeydown = (e: any) => {
+            document.onkeydown = (e: any) => {
                 // if pressed "space" key
-                if (e.keyCode == 32)
+                if (forMe() && e.keyCode == 32) {
                     this.isRecording = true;
+                }
             };
 
-            window.onkeyup = (e: any) => {
+            document.onkeyup = (e: any) => {
                 // if released "space" key
-                if (e.keyCode == 32)
+                if (forMe() && e.keyCode == 32) {
                     this.isRecording = false;
+                }
             };
         } else if (recordMode == RecordMode.PressToToggle) {
             // assign events to capture if recording or not
-            window.onkeydown = (e: any) => {
+            document.onkeydown = (e: any) => {
                 // if pressed "space" key
-                if (e.keyCode == 32) {
+                if (forMe() && e.keyCode == 32) {
                     this.isRecording = !this.isRecording;
                 }
             };
 
-            delete window.onkeyup;
+            delete document.onkeyup;
         }
     }
 

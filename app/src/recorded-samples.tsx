@@ -16,27 +16,6 @@ export interface RecordedSamplesProps {
 export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
 
 
-    /**
-     * Updates the scrollbar's horizontal position based on the width of the DisplayGesture on the left.
-     * This function will make sure that the scrollbar would not get wider than the GestureToolbox container
-     */
-    private updateScrollbar() {
-        // // focus the scrollbar on the latest sample
-        // let scrollBarDiv = document.getElementById("gestures-fluid-container");
-        // scrollBarDiv.scrollLeft = scrollBarDiv.scrollWidth;
-
-        // // resize the scrollbar based on the window size:
-        // const samplesDiv = document.getElementById("recorded-samples");
-        // const displayDiv = document.getElementById("display-gesture");
-        // if (!samplesDiv || !displayDiv) return;
-
-        // let totalWidth = samplesDiv.offsetWidth;
-        // let displayWidth = displayDiv.offsetWidth;
-        // let samplesContainerWidth = totalWidth - displayWidth - 40;
-        // scrollBarDiv.style.width = samplesContainerWidth + "px";
-    }
-
-
     public render() {
         const inputStyle = { height: "30px", padding: "auto auto auto 6px" };
         const headerStyle = { height: "60px" };
@@ -128,7 +107,6 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
                                 onDeleteHandler={this.props.onDeleteHandler}
                                 onCropHandler={(_, __, start, end) => onSampleCrop(sample, start, end)}
                                 style={sampleMarginStyle}
-                                ref={this.updateScrollbar}
                             />
                         )
                     }
