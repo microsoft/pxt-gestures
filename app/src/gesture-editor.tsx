@@ -9,6 +9,7 @@ import { serialData, SerialData } from "./serial-data";
 import { observer } from "mobx-react";
 import { RecordedSamples } from "./recorded-samples";
 import { gestureStore } from "./gesture-store";
+import { DeviceOrientation } from "./orientation";
 
 
 export interface GestureEditorProps {
@@ -109,9 +110,10 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                     {gestureStore.hasBeenModified ? <span className="ui floated left">*</span> : undefined}
                 </div>
                 <div className="ui three column grid">
-                    <div className="nine wide column">
+                    <div className="ten wide column">
                         {
-                            this.props.connected ?
+                            this.props.connected
+                                ?
                                 <div>
                                     <div ref={initGraph}>
                                         <svg className="row" id="realtime-graph-x"></svg>
@@ -136,9 +138,11 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                                         </a>
                                     </div>
                                 </div>
-
                         }
                     </div>
+
+                    <DeviceOrientation />
+
                     <div className="three wide column">
                         {
                             this.props.connected ?
@@ -150,6 +154,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                         }
                     </div>
                 </div>
+
                 <RecordedSamples
                     gesture={gestureStore.currentGesture}
                     model={gestureStore.currentModel}
