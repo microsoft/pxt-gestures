@@ -157,3 +157,9 @@
 .top-bar {
     height: 60px;
 }
+
+.orientation-history {
+    fill: rgba(221, 221, 221, 0.3);
+    stroke: #888;
+    stroke-width: 1px;
+}

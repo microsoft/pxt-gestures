@@ -3,6 +3,26 @@ import { Gesture, SignalReading, GestureSample } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { serialData } from "./serial-data";
 
+export interface Orientation {
+    x: number;
+    y: number;
+    z: number;
+    roll: number;
+    pitch: number;
+}
+
+export const ORIENTATION_HISTORY_LIMIT = 30;
+
+const createLowPassFilter = () => {
+    const alpha = 0.5;
+    let previousSmoothed = 0;
+    return (value: number) => {
+        const smoothed = alpha * value + (1 - alpha) * previousSmoothed;
+        previousSmoothed = smoothed;
+        return smoothed;
+    }
+}
+
 
 
 export class GestureStore {
@@ -12,6 +32,8 @@ export class GestureStore {
     @observable public connected: boolean;
     // needs saving
     @observable public hasBeenModified: boolean = false;
+    @observable public recentOrientations: Orientation[] = []; // 0 <= length < ORIENTATION_HISTORY_LIMIT 
+
     private models: SingleDTWCore[] = [];
     private idToType: pxt.Map<string> = {};
     private extId: string;
@@ -21,13 +43,29 @@ export class GestureStore {
     constructor() {
         this.extId = window.location.hash.substr(1);
         console.log(`extension id: ${this.extId}`)
-        
+
         window.addEventListener(
             "message",
             ev => ev.data.type == "pxtpkgext" ? this.receiveMessage(ev.data) : undefined,
             false);
 
         this.sendRequest("extinit");
+
+        const filterX = createLowPassFilter();
+        const filterY = createLowPassFilter();
+        const filterZ = createLowPassFilter();
+        serialData.register(data => {
+            const x = filterX(data.accVec.X);
+            const y = filterY(data.accVec.Y);
+            const z = filterZ(data.accVec.Z);
+            // Based on https://theccontinuum.com/2012/09/24/arduino-imu-pitch-roll-from-accelerometer/
+            const roll = Math.atan2(x, z);
+            const pitch = Math.atan2(y, Math.sqrt(x * x + z * z));
+            this.recentOrientations.push({x, y, z, roll, pitch});
+            if (this.recentOrientations.length > ORIENTATION_HISTORY_LIMIT) {
+                this.recentOrientations.shift();
+            }
+        });
     }
 
     @computed public get currentModel() {
@@ -36,6 +74,12 @@ export class GestureStore {
 
     @computed public get currentGesture() {
         return this.gestures[this.curGestureIndex];
+    }
+
+    @computed public get currentOrientation() {
+        return this.recentOrientations.length ?
+            this.recentOrientations[this.recentOrientations.length - 1] :
+            undefined;
     }
 
 
