@@ -1,4 +1,4 @@
-import { SignalReading, GestureSample, Gesture } from './gesture-data';
+import { MotionReading, GestureExampleData, Gesture } from './gesture-data';
 import * as d3 from 'd3';
 import * as React from 'react';
 import { serialData, SerialData } from './serial-data';
@@ -12,7 +12,7 @@ export enum RecordMode {
 
 export interface RecorderButtonProps {
     gesture: Gesture;
-    onNewSampleRecorded: (gesture: Gesture, sample: GestureSample) => void;
+    onNewSampleRecorded: (gesture: Gesture, sample: GestureExampleData) => void;
 }
 
 
@@ -22,7 +22,7 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
     private enabled: boolean;
     private isRecording: boolean;
     private wasRecording: boolean;
-    private sample: GestureSample;
+    private sample: GestureExampleData;
     private recordBtn: any;
 
 
@@ -43,23 +43,23 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
         this.Feed(newData.accVec);
     }
 
-    public Feed(yt: SignalReading) {
+    public Feed(yt: MotionReading) {
         if (this.enabled) {
             if (!this.wasRecording && this.isRecording) {
                 // start recording
-                this.sample = new GestureSample();
+                this.sample = new GestureExampleData();
                 this.sample.startTime = Date.now();
-                this.sample.rawData.push(yt);
+                this.sample.motion.push(yt);
 
                 this.recordBtn.classed("green", true);
             } else if (this.wasRecording && this.isRecording) {
                 // continue recording
-                this.sample.rawData.push(yt);
+                this.sample.motion.push(yt);
             } else if (this.wasRecording && !this.isRecording) {
                 // stop recording
                 this.sample.endTime = Date.now();
                 this.sample.cropStartIndex = 0;
-                this.sample.cropEndIndex = this.sample.rawData.length - 1;
+                this.sample.cropEndIndex = this.sample.motion.length - 1;
                 this.props.onNewSampleRecorded(this.props.gesture, this.sample);
 
                 this.recordBtn.classed("green", false);

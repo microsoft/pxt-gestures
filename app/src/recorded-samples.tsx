@@ -1,6 +1,6 @@
 import * as React from "react";
-import { GraphCard } from "./graphcard";
-import { Gesture, GestureSample } from "./gesture-data";
+import { GestureExample } from "./gesture-example";
+import { Gesture, GestureExampleData } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { observer } from "mobx-react";
 
@@ -8,7 +8,7 @@ import { observer } from "mobx-react";
 export interface RecordedSamplesProps {
     gesture: Gesture;
     model: SingleDTWCore;
-    onDeleteHandler: (g: Gesture, s: GestureSample) => void,
+    onDeleteHandler: (g: Gesture, s: GestureExampleData) => void,
 }
 
 
@@ -41,7 +41,7 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
          * @param newStart the updated cropStartIndex
          * @param newEnd the updated cropEndIndex
          */
-        const onSampleCrop = (sample: GestureSample, newStart: number, newEnd: number) => {
+        const onSampleCrop = (sample: GestureExampleData, newStart: number, newEnd: number) => {
             // let gi = this.getGestureIndex(gid);
             // let si = this.getSampleIndex(gi, sid);
 
@@ -79,11 +79,11 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
                                 this.props.gesture.samples.length == 0 ?
                                     undefined
                                     :
-                                    <GraphCard
+                                    <GestureExample
                                         key={this.props.gesture.displayGesture.sampleID}
                                         editable={false}
                                         gesture={this.props.gesture}
-                                        sample={this.props.gesture.displayGesture}
+                                        example={this.props.gesture.displayGesture}
                                         dx={7}
                                         graphHeight={70}
                                         maxVal={2450}
@@ -96,11 +96,11 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
                 <div id="gestures-fluid-container">
                     {
                         this.props.gesture.samples.map(sample =>
-                            <GraphCard
+                            <GestureExample
                                 key={sample.sampleID}
                                 editable={true}
                                 gesture={this.props.gesture}
-                                sample={sample}
+                                example={sample}
                                 dx={7}
                                 graphHeight={80}
                                 maxVal={2450}

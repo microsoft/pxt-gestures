@@ -1,14 +1,15 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { gestureStore, Orientation } from "./gesture-store";
+import { gestureStore } from "./gesture-store";
+import { MotionReading } from "./gesture-data";
 
 
 const HALF_PI = Math.PI * 0.5;
 
-export function getStyleForOrientation(orientation: Orientation): React.CSSProperties {
+export function getStyleForReading(reading: MotionReading): React.CSSProperties {
     return {
         transformStyle: "preserve-3d",
-        transform: "rotateY(" + (orientation.roll - Math.PI) + "rad) rotateX(" + orientation.pitch + "rad)",
+        transform: "rotateY(" + (reading.roll - Math.PI) + "rad) rotateX(" + reading.pitch + "rad)",
         padding: 0
     };
 }
@@ -23,6 +24,7 @@ export class OrientedDevice extends React.Component<OrientedDeviceProps, {}> {
 
     public render() {
         const orientation = gestureStore.currentOrientation;
+        if (!orientation) { return null; }
         const backShowing = -HALF_PI <= orientation.roll && orientation.roll <= HALF_PI;
         const imgSource = backShowing ? "/circuitplayground-back.png" : "/circuitplayground-front.png";
         return (
@@ -31,7 +33,7 @@ export class OrientedDevice extends React.Component<OrientedDeviceProps, {}> {
                     src={imgSource}
                     width={this.props.width}
                     height={this.props.height}
-                    style={getStyleForOrientation(orientation)}
+                    style={getStyleForReading(orientation)}
                 />
             </div>
         );

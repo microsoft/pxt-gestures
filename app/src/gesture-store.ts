@@ -1,17 +1,10 @@
 import { computed, observable, action } from "mobx";
-import { Gesture, SignalReading, GestureSample } from "./gesture-data";
+import { Gesture, MotionReading, GestureExampleData } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { serialData } from "./serial-data";
 
-export interface Orientation {
-    x: number;
-    y: number;
-    z: number;
-    roll: number;
-    pitch: number;
-}
 
-export const ORIENTATION_HISTORY_LIMIT = 30;
+const READING_HISTORY_LIMIT = 30;
 
 const createLowPassFilter = () => {
     const alpha = 0.5;
@@ -32,7 +25,7 @@ export class GestureStore {
     @observable public connected: boolean;
     // needs saving
     @observable public hasBeenModified: boolean = false;
-    @observable public recentOrientations: Orientation[] = []; // 0 <= length < ORIENTATION_HISTORY_LIMIT 
+    @observable public readings: MotionReading[] = []; // 0 <= length < READING_HISTORY_LIMIT 
 
     private models: SingleDTWCore[] = [];
     private idToType: pxt.Map<string> = {};
@@ -55,18 +48,17 @@ export class GestureStore {
         const filterY = createLowPassFilter();
         const filterZ = createLowPassFilter();
         serialData.register(data => {
-            const x = filterX(data.accVec.X);
-            const y = filterY(data.accVec.Y);
-            const z = filterZ(data.accVec.Z);
-            // Based on https://theccontinuum.com/2012/09/24/arduino-imu-pitch-roll-from-accelerometer/
-            const roll = Math.atan2(x, z);
-            const pitch = Math.atan2(y, Math.sqrt(x * x + z * z));
-            this.recentOrientations.push({x, y, z, roll, pitch});
-            if (this.recentOrientations.length > ORIENTATION_HISTORY_LIMIT) {
-                this.recentOrientations.shift();
+            const accelX = filterX(data.accVec.accelX);
+            const accelY = filterY(data.accVec.accelY);
+            const accelZ = filterZ(data.accVec.accelZ);
+            this.readings.push(new MotionReading(accelX, accelY, accelZ));
+            if (this.readings.length > READING_HISTORY_LIMIT) {
+                this.readings.shift();
             }
         });
     }
+
+    public get readingLimit() { return READING_HISTORY_LIMIT; }
 
     @computed public get currentModel() {
         return this.models[this.curGestureIndex];
@@ -77,8 +69,8 @@ export class GestureStore {
     }
 
     @computed public get currentOrientation() {
-        return this.recentOrientations.length ?
-            this.recentOrientations[this.recentOrientations.length - 1] :
+        return this.readings.length ?
+            this.readings[this.readings.length - 1] :
             undefined;
     }
 
@@ -88,7 +80,7 @@ export class GestureStore {
     }
 
 
-    @action public deleteSample(gesture: Gesture, sample: GestureSample) {
+    @action public deleteSample(gesture: Gesture, sample: GestureExampleData) {
         let cloneData = this.gestures.slice();
         const gi = this.gestures.indexOf(gesture);
         const si = this.gestures[gi].samples.indexOf(sample);
@@ -102,11 +94,11 @@ export class GestureStore {
         this.markDirty();
     }
 
-    @action public addSample(gesture: Gesture, newSample: GestureSample) {
+    @action public addSample(gesture: Gesture, newSample: GestureExampleData) {
         let cloneData = this.gestures.slice();
         const gestureIndex = this.gestures.indexOf(gesture);
         // do not change the order of the following lines:
-        cloneData[gestureIndex].samples.push(newSample);
+        cloneData[gestureIndex].samples.unshift(newSample);
         gestureStore.currentModel.Update(cloneData[gestureIndex].getCroppedData());
         cloneData[gestureIndex].displayGesture = gestureStore.currentModel.GetMainPrototype();
 
@@ -257,12 +249,12 @@ export class GestureStore {
      * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
      * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
      */
-    parseJSONGesture(importedSample: any): GestureSample {
-        let sample = new GestureSample();
+    parseJSONGesture(importedSample: any): GestureExampleData {
+        let sample = new GestureExampleData();
 
         for (let k = 0; k < importedSample.rawData.length; k++) {
             let vec = importedSample.rawData[k];
-            sample.rawData.push(new SignalReading(vec.X, vec.Y, vec.Z));
+            sample.motion.push(new MotionReading(vec.X, vec.Y, vec.Z));
         }
 
         sample.videoLink = importedSample.videoLink;
@@ -319,13 +311,13 @@ function parseString(strBuf: string): any {
     // populate members of newData (type: SensorData) with the values received from the device
     let strBufArray = strBuf.split(" ");
     let result = {
-        acc: false, accVec: new SignalReading(0, 0, 0),
+        acc: false, accVec: new MotionReading(0, 0, 0),
         /*mag: false, magVec: new Vector(0, 0, 0)*/
     };
 
     for (let i = 0; i < strBufArray.length; i++) {
         if (strBufArray[i] == "A") {
-            result.accVec = new SignalReading(parseInt(strBufArray[i + 1]), parseInt(strBufArray[i + 2]), parseInt(strBufArray[i + 3]));
+            result.accVec = new MotionReading(parseInt(strBufArray[i + 1]), parseInt(strBufArray[i + 2]), parseInt(strBufArray[i + 3]));
             result.acc = true;
 
             i += 3;

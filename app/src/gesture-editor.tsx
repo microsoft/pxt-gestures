@@ -1,7 +1,7 @@
 import * as React from "react";
 import { RecorderButton } from "./recorder";
 import { SignalPlot } from "./visualizations";
-import { Gesture, GestureSample, Match } from "./gesture-data";
+import { Gesture, GestureExampleData, Match } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 // import { RecognitionOverlay } from "./visualizations";
 import { serialData, SerialData } from "./serial-data";
@@ -9,14 +9,14 @@ import { observer } from "mobx-react";
 import { RecordedSamples } from "./recorded-samples";
 import { gestureStore } from "./gesture-store";
 import { OrientedDevice } from "./orientation";
-import { OrientationHistory } from "./timeline";
+import { MotionTimeline } from "./timeline";
 
 
 export interface GestureEditorProps {
     gesture: Gesture;
     model: SingleDTWCore;
     connected: boolean;
-    onNewSampleRecorded: (gesture: Gesture, sample: GestureSample) => void;
+    onNewSampleRecorded: (gesture: Gesture, sample: GestureExampleData) => void;
     backToMain: () => void;
 }
 
@@ -37,9 +37,9 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
 
     private onSerialData(newData: SerialData) {
         if (!this.plotX) return;
-        this.plotX.update(newData.accVec.X);
-        this.plotY.update(newData.accVec.Y);
-        this.plotZ.update(newData.accVec.Z);
+        this.plotX.update(newData.accVec.accelX);
+        this.plotY.update(newData.accVec.accelY);
+        this.plotZ.update(newData.accVec.accelZ);
     }
 
     public newMatch(match: Match) {
@@ -67,7 +67,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
          * @param gid the unique gesture id of the gesture that contains the sample which is going to be deleted
          * @param sid the unique sample id which is going to be deleted
          */
-        const onSampleDelete = (gesture: Gesture, sample: GestureSample) => {
+        const onSampleDelete = (gesture: Gesture, sample: GestureExampleData) => {
             gestureStore.deleteSample(gesture, sample);
         }
 
@@ -102,7 +102,13 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                             this.props.connected
                                 ?
                                 <div style={{ position: 'absolute' }}>
-                                    <OrientationHistory width={500} height={200} />
+                                    <MotionTimeline
+                                        readings={gestureStore.readings}
+                                        numReadingsToShow={gestureStore.readingLimit}
+                                        width={500}
+                                        height={200}
+                                        hideStillMotion={true}
+                                    />
                                     <OrientedDevice width={200} height={200} />
                                 </div>
                                 :

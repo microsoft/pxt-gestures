@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { observer } from "mobx-react";
-import { Gesture, GestureSample } from "./gesture-data";
+import { Gesture, GestureExampleData } from "./gesture-data";
 import { GestureEditor } from "./gesture-editor";
 import { serialData } from "./serial-data";
 import { gestureStore } from "./gesture-store";
@@ -74,7 +74,7 @@ export class GestureToolbox extends React.Component<{}, {}> {
          * It will be called when the media stream recorder has finished generating the recorded video.
          * It will then update the this.state.data[] array, regenerate the DTW model, and update the scrollbar.
          */
-        const onNewSampleRecorded = (gesture: Gesture, newSample: GestureSample) => {
+        const onNewSampleRecorded = (gesture: Gesture, newSample: GestureExampleData) => {
             gestureStore.addSample(gesture, newSample);
         }
 

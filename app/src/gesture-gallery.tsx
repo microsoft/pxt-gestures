@@ -1,6 +1,6 @@
 import * as React from "react";
 import { gestureStore } from "./gesture-store";
-import { GraphCard } from "./graphcard";
+import { GestureExample } from "./gesture-example";
 import { observer } from "mobx-react";
 
 
@@ -47,11 +47,11 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                             </div>
                             <div className="ui segment" >
                                 <div className="ui grid" >
-                                    <GraphCard
+                                    <GestureExample
                                         key={gesture.gestureID}
                                         editable={false}
                                         gesture={gesture}
-                                        sample={gesture.displayGesture}
+                                        example={gesture.displayGesture}
                                         dx={7}
                                         graphHeight={70}
                                         maxVal={2450}

@@ -1,21 +1,21 @@
-import { SignalReading, Match } from './gesture-data';
+import { MotionReading, Match } from './gesture-data';
 
 
-export function EuclideanDistance(a: SignalReading, b: SignalReading): number {
+export function EuclideanDistance(a: MotionReading, b: MotionReading): number {
     // L2 Norm:
-    return Math.sqrt(Math.pow(a.X - b.X, 2) + Math.pow(a.Y - b.Y, 2) + Math.pow(a.Z - b.Z, 2));
+    return Math.sqrt(Math.pow(a.accelX - b.accelX, 2) + Math.pow(a.accelY - b.accelY, 2) + Math.pow(a.accelZ - b.accelZ, 2));
 }
 
 
-export function ManhattanDistance(a: SignalReading, b: SignalReading): number {
+export function ManhattanDistance(a: MotionReading, b: MotionReading): number {
     // L1 Distance:
-    return Math.abs(a.X - b.X) + Math.abs(a.Y - b.Y) + Math.abs(a.Z - b.Z);
+    return Math.abs(a.accelX - b.accelX) + Math.abs(a.accelY - b.accelY) + Math.abs(a.accelZ - b.accelZ);
 }
 
 
-export function EuclideanDistanceFast(a: SignalReading, b: SignalReading): number {
+export function EuclideanDistanceFast(a: MotionReading, b: MotionReading): number {
     // L2 Norm:
-    return IntegerSqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) + (a.Z - b.Z) * (a.Z - b.Z));
+    return IntegerSqrt((a.accelX - b.accelX) * (a.accelX - b.accelX) + (a.accelY - b.accelY) * (a.accelY - b.accelY) + (a.accelZ - b.accelZ) * (a.accelZ - b.accelZ));
 }
 
 
@@ -433,61 +433,61 @@ export class DBA<SampleType> {
     }
 }
 
-export function Average(inp: SignalReading[]): SignalReading {
-    let mean = new SignalReading(0, 0, 0);
+export function Average(inp: MotionReading[]): MotionReading {
+    let mean = new MotionReading(0, 0, 0);
 
     for (let i = 0; i < inp.length; i++) {
-        mean.X += inp[i].X;
-        mean.Y += inp[i].Y;
-        mean.Z += inp[i].Z;
+        mean.accelX += inp[i].accelX;
+        mean.accelY += inp[i].accelY;
+        mean.accelZ += inp[i].accelZ;
     }
 
-    mean.X /= inp.length;
-    mean.Y /= inp.length;
-    mean.Z /= inp.length;
+    mean.accelX /= inp.length;
+    mean.accelY /= inp.length;
+    mean.accelZ /= inp.length;
 
     return mean;
 }
 
-export function roundVecArray(data: SignalReading[]): SignalReading[] {
-    let roundedVec: SignalReading[] = [];
+export function roundVecArray(data: MotionReading[]): MotionReading[] {
+    let roundedVec: MotionReading[] = [];
 
     for (let i = 0; i < data.length; i++)
-        roundedVec.push(new SignalReading(Math.round(data[i].X), Math.round(data[i].Y), Math.round(data[i].Z)));
+        roundedVec.push(new MotionReading(Math.round(data[i].accelX), Math.round(data[i].accelY), Math.round(data[i].accelZ)));
 
     return roundedVec;
 }
 
-export function ComputeVarianceVec(protoArray: SignalReading[][]): number {
-    let sum = new SignalReading(0, 0, 0);
-    let sumSquares = new SignalReading(0, 0, 0);
+export function ComputeVarianceVec(protoArray: MotionReading[][]): number {
+    let sum = new MotionReading(0, 0, 0);
+    let sumSquares = new MotionReading(0, 0, 0);
     let size = 0;
 
     for (let i = 0; i < protoArray.length; i++) {
         size += protoArray[i].length;
 
         for (let j = 0; j < protoArray[i].length; j++) {
-            sum = new SignalReading(sum.X + protoArray[i][j].X,
-                sum.Y + protoArray[i][j].Y,
-                sum.Z + protoArray[i][j].Z);
+            sum = new MotionReading(sum.accelX + protoArray[i][j].accelX,
+                sum.accelY + protoArray[i][j].accelY,
+                sum.accelZ + protoArray[i][j].accelZ);
 
-            sumSquares = new SignalReading(sumSquares.X + Math.pow(protoArray[i][j].X, 2),
-                sumSquares.Y + Math.pow(protoArray[i][j].Y, 2),
-                sumSquares.Z + Math.pow(protoArray[i][j].Z, 2));
+            sumSquares = new MotionReading(sumSquares.accelX + Math.pow(protoArray[i][j].accelX, 2),
+                sumSquares.accelY + Math.pow(protoArray[i][j].accelY, 2),
+                sumSquares.accelZ + Math.pow(protoArray[i][j].accelZ, 2));
         }
     }
 
-    let variance = new SignalReading(((sumSquares.X - (Math.pow(sum.X, 2) / size)) / size),
-        ((sumSquares.Y - (Math.pow(sum.Y, 2) / size)) / size),
-        ((sumSquares.Z - (Math.pow(sum.Z, 2) / size)) / size));
+    let variance = new MotionReading(((sumSquares.accelX - (Math.pow(sum.accelX, 2) / size)) / size),
+        ((sumSquares.accelY - (Math.pow(sum.accelY, 2) / size)) / size),
+        ((sumSquares.accelZ - (Math.pow(sum.accelZ, 2) / size)) / size));
 
-    return EuclideanDistance(variance, new SignalReading(0, 0, 0));
+    return EuclideanDistance(variance, new MotionReading(0, 0, 0));
 }
 
-export function findMinimumThreshold(prototypeArray: SignalReading[][],
-    referencePrototype: SignalReading[],
+export function findMinimumThreshold(prototypeArray: MotionReading[][],
+    referencePrototype: MotionReading[],
     avgLen: number,
-    distFun: (a: SignalReading, b: SignalReading) => number,
+    distFun: (a: MotionReading, b: MotionReading) => number,
     step: number,
     maxStep: number): number {
     // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
@@ -501,14 +501,14 @@ export function findMinimumThreshold(prototypeArray: SignalReading[][],
 
     do {
         // TODO: make it more efficient by adding RESET function and accessors for the threshold 
-        let spring = new DTW<SignalReading>(referencePrototype, threshold, 1, avgLen, distFun);
+        let spring = new DTW<MotionReading>(referencePrototype, threshold, 1, avgLen, distFun);
 
         let time = 0;
 
         for (let k = 0; k < prototypeArray.length; k++) {
             // run some random data
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new SignalReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.Feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }
@@ -522,7 +522,7 @@ export function findMinimumThreshold(prototypeArray: SignalReading[][],
             let te = time;
 
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new SignalReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.Feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }

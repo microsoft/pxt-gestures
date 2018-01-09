@@ -12,31 +12,31 @@ export class Point {
 
 
 export class Gesture {
-    @observable public samples: GestureSample[];
+    @observable public samples: GestureExampleData[];
     @observable public labelNumber: number;
     @observable public name: string;
     @observable public description: string;
-    @observable public displayGesture: GestureSample;
-    
+    @observable public displayGesture: GestureExampleData;
+
     private static id: number = 0;
     public gestureID: number;
 
     constructor() {
         this.samples = [];
-        this.displayGesture = new GestureSample();
+        this.displayGesture = new GestureExampleData();
         this.gestureID = Gesture.id++;
         this.name = "gesture " + this.gestureID.toString();
         this.description = "description of this gesture will be here. it's a great and wonderful gesture. you won't be dissapointed " + this.gestureID.toString();
     }
 
-    public getCroppedData(): SignalReading[][] {
-        let all_data: SignalReading[][] = [];
+    public getCroppedData(): MotionReading[][] {
+        let all_data: MotionReading[][] = [];
 
         for (let i = 0; i < this.samples.length; i++) {
-            let sample: SignalReading[] = [];
+            let sample: MotionReading[] = [];
 
             for (let j = this.samples[i].cropStartIndex; j <= this.samples[i].cropEndIndex; j++) {
-                sample.push(this.samples[i].rawData[j].Clone());
+                sample.push(this.samples[i].motion[j].clone());
             }
 
             all_data.push(sample);
@@ -47,27 +47,28 @@ export class Gesture {
 }
 
 
-export class GestureSample {
-    public rawData: SignalReading[];
+export class GestureExampleData {
+    public motion: MotionReading[];
     public videoLink: any;
     public videoData: any;
     public startTime: number;
     public endTime: number;
-    private static id: number = 0;
     public sampleID: number;
     public cropStartIndex: number;
     public cropEndIndex: number;
 
+    private static id: number = 0;
+
     constructor() {
-        this.rawData = [];
-        this.sampleID = GestureSample.id++;
+        this.motion = [];
+        this.sampleID = GestureExampleData.id++;
     }
 
-    public Clone(): GestureSample {
-        let cloneSample = new GestureSample();
+    public clone(): GestureExampleData {
+        let cloneSample = new GestureExampleData();
 
-        for (let i = 0; i < this.rawData.length; i++) {
-            cloneSample.rawData.push(this.rawData[i]);
+        for (let i = 0; i < this.motion.length; i++) {
+            cloneSample.motion.push(this.motion[i]);
         }
 
         cloneSample.videoLink = this.videoLink;
@@ -82,37 +83,41 @@ export class GestureSample {
 }
 
 
-export class SignalReading {
-    public X: number;
-    public Y: number;
-    public Z: number;
+export class MotionReading {
 
-    constructor(x: number, y: number, z: number) {
-        this.X = x;
-        this.Y = y;
-        this.Z = z;
+    constructor(
+        public accelX: number,
+        public accelY: number,
+        public accelZ: number) {
     }
 
-    public Clone() {
-        return new SignalReading(this.X, this.Y, this.Z);
+    public clone() {
+        return new MotionReading(this.accelX, this.accelY, this.accelZ);
     }
+
+    public get roll() {
+        // Based on https://theccontinuum.com/2012/09/24/arduino-imu-pitch-roll-from-accelerometer/
+        return Math.atan2(this.accelX, this.accelZ);
+    }
+
+    public get pitch() {
+        // Based on https://theccontinuum.com/2012/09/24/arduino-imu-pitch-roll-from-accelerometer/
+        return Math.atan2(this.accelY, Math.sqrt(this.accelX * this.accelX + this.accelZ * this.accelZ));
+    }
+
 }
 
 
 export class Match {
-    public minDist: number;
-    public Ts: number;
-    public Te: number;
-    public classNum: number;
 
-    constructor(_dmin: number, _ts: number, _te: number, _classNum: number) {
-        this.minDist = _dmin;
-        this.Te = _te;
-        this.Ts = _ts;
-        this.classNum = _classNum;
+    constructor(
+        public minDist: number,
+        public Ts: number,
+        public Te: number,
+        public classNum: number) {
     }
 
-    public Length(): number {
+    public length(): number {
         return this.Te - this.Ts;
     }
 }

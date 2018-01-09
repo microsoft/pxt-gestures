@@ -1,4 +1,4 @@
-import { SignalReading } from "./gesture-data";
+import { MotionReading } from "./gesture-data";
 
 export class Observable<T> {
     private observers: ((data: T) => void)[] = [];
@@ -18,7 +18,7 @@ export class Observable<T> {
 
 export interface SerialData {
     acc: boolean;
-    accVec: SignalReading;
+    accVec: MotionReading;
 }
 
-export const serialData = new Observable<any>();
+export const serialData = new Observable<SerialData>();
