@@ -163,3 +163,9 @@
     stroke: #888;
     stroke-width: 1px;
 }
+
+.orientation-history.match {
+    fill: rgba(0, 255, 0, 0.5);
+    stroke: #888;
+    stroke-width: 1px;
+}

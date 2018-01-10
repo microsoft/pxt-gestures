@@ -1,10 +1,8 @@
 import * as React from "react";
 import { RecorderButton } from "./recorder";
-import { SignalPlot } from "./visualizations";
-import { Gesture, GestureExampleData, Match } from "./gesture-data";
+import { Gesture, GestureExampleData } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 // import { RecognitionOverlay } from "./visualizations";
-import { serialData, SerialData } from "./serial-data";
 import { observer } from "mobx-react";
 import { RecordedSamples } from "./recorded-samples";
 import { gestureStore } from "./gesture-store";
@@ -23,43 +21,6 @@ export interface GestureEditorProps {
 
 @observer
 export class GestureEditor extends React.Component<GestureEditorProps, {}> {
-    private plotX: SignalPlot;
-    private plotY: SignalPlot;
-    private plotZ: SignalPlot;
-    // private recognitionOverlay: RecognitionOverlay;
-
-
-    constructor(props: GestureEditorProps) {
-        super(props);
-        this.onSerialData = this.onSerialData.bind(this);
-        serialData.register(this.onSerialData)
-    }
-
-    private onSerialData(newData: SerialData) {
-        if (!this.plotX) return;
-        this.plotX.update(newData.accVec.accelX);
-        this.plotY.update(newData.accVec.accelY);
-        this.plotZ.update(newData.accVec.accelZ);
-    }
-
-    public newMatch(match: Match) {
-        // if (match.classNum != 0) {
-        //     // a gesture has been recognized - create the green rectangle overlay on the realtime graph
-        //     this.recognitionOverlay.add(match, this.props.model.getTick());
-        // }
-        // this.recognitionOverlay.tick(this.props.model.getTick());
-
-    }
-
-    /**
-     * Sets the RealTimeGraph, and the Recorder uninitialized to make sure that they get initialized again when
-     * editing a gesture or creating a new gesture when changing the component's state back to {editGesture: true}
-     */
-    resetGraph() {
-        this.plotX = this.plotY = this.plotZ = undefined;
-    }
-
-
 
     public render() {
         /**
@@ -102,9 +63,12 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                             this.props.connected
                                 ?
                                 <div style={{ position: 'absolute' }}>
+
                                     <OrientedDevice width={200} height={200} />
+
                                     <MotionTimeline
                                         readings={gestureStore.readings}
+                                        isMatch={t => gestureStore.isMatch(t)}
                                         numReadingsToShow={gestureStore.readingLimit}
                                         width={700}
                                         height={200}

@@ -4,7 +4,6 @@ import * as React from "react";
 import { observer } from "mobx-react";
 import { Gesture, GestureExampleData } from "./gesture-data";
 import { GestureEditor } from "./gesture-editor";
-import { serialData } from "./serial-data";
 import { gestureStore } from "./gesture-store";
 import { observable } from "mobx";
 import { GestureGallery } from "./gesture-gallery";
@@ -18,8 +17,6 @@ export class GestureToolbox extends React.Component<{}, {}> {
     // switch between the edit gesture mode and the main gesture view containing all of the recorded and imported gestures
     @observable editMode?: boolean;
 
-
-
     constructor(props: {}) {
         super(props);
         this.state = {
@@ -28,32 +25,15 @@ export class GestureToolbox extends React.Component<{}, {}> {
         };
     }
 
-
-    componentDidMount() {
-        serialData.register(newData => {
-            if (gestureStore.currentModel && gestureStore.currentModel.isRunning()) {
-                let match = gestureStore.currentModel.Feed(newData.accVec);
-                if (this.gestureEditor && match.valid) {
-                    this.gestureEditor.newMatch(match);
-                }
-            }
-        })
-    }
-
-
-
     hide() {
         // generates the blocks and reloads the workspace to make them available instantly 
         // though it will not reload if there were no changes to any of the gestures
         gestureStore.saveBlocks();
 
         this.editMode = false;
-        if (this.gestureEditor)
-            this.gestureEditor.resetGraph();
 
         gestureStore.deleteIfGestureEmpty();
     }
-
 
     render() {
 
@@ -86,8 +66,6 @@ export class GestureToolbox extends React.Component<{}, {}> {
          */
         const newGesture = () => {
             this.editMode = true;
-            if (this.gestureEditor)
-                this.gestureEditor.resetGraph();
             gestureStore.addGesture();
         }
 
@@ -98,8 +76,6 @@ export class GestureToolbox extends React.Component<{}, {}> {
          */
         const editGesture = (gestureID: number) => {
             this.editMode = true;
-            if (this.gestureEditor)
-                this.gestureEditor.resetGraph();
             gestureStore.setCurrentGesture(gestureID);
         }
 
@@ -113,8 +89,6 @@ export class GestureToolbox extends React.Component<{}, {}> {
             // update blocks if was touched
             gestureStore.saveBlocks();
 
-            if (this.gestureEditor)
-                this.gestureEditor.resetGraph();
             gestureStore.deleteIfGestureEmpty();
             this.editMode = false;
         }

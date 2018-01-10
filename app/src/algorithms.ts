@@ -43,7 +43,7 @@ export function IntegerSqrt(n: number) {
 
         shift -= 2;
     }
-
+   
     return result;
 }
 
@@ -78,7 +78,7 @@ export class DTW<SampleType> {
     }
 
 
-    constructor(_refPrototype: SampleType[], _threshold: number, _classNum: number, _avgProtoLen: number,
+    constructor(_refPrototype: SampleType[], private startTime: number, _threshold: number, _classNum: number, _avgProtoLen: number,
         _distFun: (a: SampleType, b: SampleType) => number) {
         this.Y = _refPrototype;
         this.eps = _threshold;
@@ -116,7 +116,7 @@ export class DTW<SampleType> {
     }
 
 
-    public Feed(xt: SampleType): Match {
+    public feed(xt: SampleType): Match {
         let predict = new Match(0, 0, 0, 0);
 
         let t = this.t + 1;
@@ -151,12 +151,14 @@ export class DTW<SampleType> {
             let matchLength = this.te - this.ts;
 
             if (matchLength > this.minLen && matchLength < this.maxLen) {
-                for (let i = 0; i <= this.M; i++)
-                    if (!(this.d[i] >= this.dmin || this.s[i] > this.te))
+                for (let i = 0; i <= this.M; i++) {
+                    if (!(this.d[i] >= this.dmin || this.s[i] > this.te)) {
                         condition = false;
+                    }
+                }
 
                 if (condition) {
-                    predict = new Match(this.dmin, this.ts - 1, this.te - 1, this.classNumber);
+                    predict = new Match(this.dmin, this.startTime + this.ts - 1, this.startTime + this.te - 1, this.classNumber);
                     this.Reset();
                 }
             }
@@ -267,6 +269,8 @@ export class RC4 {
         return chosen;
     }
 }
+
+
 
 export class DBA<SampleType> {
     /*
@@ -433,7 +437,9 @@ export class DBA<SampleType> {
     }
 }
 
-export function Average(inp: MotionReading[]): MotionReading {
+
+
+export function average(inp: MotionReading[]): MotionReading {
     let mean = new MotionReading(0, 0, 0);
 
     for (let i = 0; i < inp.length; i++) {
@@ -449,6 +455,8 @@ export function Average(inp: MotionReading[]): MotionReading {
     return mean;
 }
 
+
+
 export function roundVecArray(data: MotionReading[]): MotionReading[] {
     let roundedVec: MotionReading[] = [];
 
@@ -457,6 +465,8 @@ export function roundVecArray(data: MotionReading[]): MotionReading[] {
 
     return roundedVec;
 }
+
+
 
 export function ComputeVarianceVec(protoArray: MotionReading[][]): number {
     let sum = new MotionReading(0, 0, 0);
@@ -484,6 +494,8 @@ export function ComputeVarianceVec(protoArray: MotionReading[][]): number {
     return EuclideanDistance(variance, new MotionReading(0, 0, 0));
 }
 
+
+
 export function findMinimumThreshold(prototypeArray: MotionReading[][],
     referencePrototype: MotionReading[],
     avgLen: number,
@@ -501,28 +513,28 @@ export function findMinimumThreshold(prototypeArray: MotionReading[][],
 
     do {
         // TODO: make it more efficient by adding RESET function and accessors for the threshold 
-        let spring = new DTW<MotionReading>(referencePrototype, threshold, 1, avgLen, distFun);
+        let spring = new DTW<MotionReading>(referencePrototype, 0, threshold, 1, avgLen, distFun);
 
         let time = 0;
 
         for (let k = 0; k < prototypeArray.length; k++) {
             // run some random data
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }
 
             let ts = time;
             for (let r = 0; r < prototypeArray[k].length; r++) {
-                let m = spring.Feed(prototypeArray[k][r]);
+                let m = spring.feed(prototypeArray[k][r]);
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }
             let te = time;
 
             for (let r = 0; r < 10; r++) {
-                let m = spring.Feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                let m = spring.feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
                 if (m.classNum != 0) predictMatch.push(m);
                 time++;
             }
@@ -549,6 +561,8 @@ export function findMinimumThreshold(prototypeArray: MotionReading[][],
     return threshold;
 }
 
+
+
 export class MultiDTW<SampleType> {
     private cores: DTW<SampleType>[];
     private activeCores: boolean[];
@@ -562,7 +576,7 @@ export class MultiDTW<SampleType> {
     private bestMatch: Match;
     private bestDist: number;
 
-    constructor(_refPrototypes: SampleType[][], _thresholds: number[], _avgProtoLengths: number[],
+    constructor(_refPrototypes: SampleType[][], startTime: number, _thresholds: number[], _avgProtoLengths: number[],
         _distFun: (a: SampleType, b: SampleType) => number) {
         this.predictionsArray = [];
         this.cores = [];
@@ -576,7 +590,7 @@ export class MultiDTW<SampleType> {
         let maxLen = -999;
 
         for (let i = 0; i < _refPrototypes.length; i++) {
-            this.cores.push(new DTW<SampleType>(_refPrototypes[i], _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
+            this.cores.push(new DTW<SampleType>(_refPrototypes[i], startTime, _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
             this.activeCores.push(false);
 
             if (minLen > _avgProtoLengths[i]) minLen = _avgProtoLengths[i];
@@ -601,7 +615,7 @@ export class MultiDTW<SampleType> {
 
         for (let i = 0; i < this.cores.length; i++) {
             if (this.activeCores[i]) {
-                let m = this.cores[i].Feed(xt);
+                let m = this.cores[i].feed(xt);
 
                 if (m.classNum != 0) {
                     // we have a report:

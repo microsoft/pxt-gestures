@@ -1,5 +1,5 @@
 import { computed, observable, action } from "mobx";
-import { Gesture, MotionReading, GestureExampleData } from "./gesture-data";
+import { Gesture, MotionReading, GestureExampleData, Match } from "./gesture-data";
 import { SingleDTWCore } from "./model";
 import { serialData } from "./serial-data";
 
@@ -26,6 +26,8 @@ export class GestureStore {
     // needs saving
     @observable public hasBeenModified: boolean = false;
     @observable public readings: MotionReading[] = []; // 0 <= length < READING_HISTORY_LIMIT 
+    @observable public latestTimestamp: number = 0;
+    @observable public matches: Match[] = [];
 
     private models: SingleDTWCore[] = [];
     private idToType: pxt.Map<string> = {};
@@ -47,31 +49,51 @@ export class GestureStore {
         const filterX = createLowPassFilter();
         const filterY = createLowPassFilter();
         const filterZ = createLowPassFilter();
+
         serialData.register(data => {
             const accelX = filterX(data.accVec.accelX);
             const accelY = filterY(data.accVec.accelY);
             const accelZ = filterZ(data.accVec.accelZ);
+
             this.readings.push(new MotionReading(accelX, accelY, accelZ));
+            this.latestTimestamp++;
             if (this.readings.length > READING_HISTORY_LIMIT) {
                 this.readings.shift();
+            }
+
+            if (this.currentModel && this.currentModel.isRunning()) {
+                let match = this.currentModel.feed(data.accVec);
+                if (match.valid) {
+                    this.matches.push(match);
+                }
             }
         });
     }
 
+
     public get readingLimit() { return READING_HISTORY_LIMIT; }
+
 
     @computed public get currentModel() {
         return this.models[this.curGestureIndex];
     }
 
+
     @computed public get currentGesture() {
         return this.gestures[this.curGestureIndex];
     }
+
 
     @computed public get currentOrientation() {
         return this.readings.length ?
             this.readings[this.readings.length - 1] :
             undefined;
+    }
+
+
+    public isMatch(readingIndex: number): boolean {
+        const t = this.latestTimestamp - (this.readings.length - 1 - readingIndex);
+        return this.matches.findIndex(m => m.Ts <= t && t <= m.Te) >= 0;
     }
 
 
@@ -87,24 +109,26 @@ export class GestureStore {
 
         cloneData[gi].samples.splice(si, 1);
         const model = this.models[gi];
-        model.Update(cloneData[gi].getCroppedData());
-        cloneData[gi].displayGesture = model.GetMainPrototype();
+        model.update(cloneData[gi].getCroppedData(), this.latestTimestamp);
+        cloneData[gi].displayGesture = model.mainPrototype;
 
         this.gestures = cloneData;
         this.markDirty();
     }
+
 
     @action public addSample(gesture: Gesture, newSample: GestureExampleData) {
         let cloneData = this.gestures.slice();
         const gestureIndex = this.gestures.indexOf(gesture);
         // do not change the order of the following lines:
         cloneData[gestureIndex].samples.unshift(newSample);
-        gestureStore.currentModel.Update(cloneData[gestureIndex].getCroppedData());
-        cloneData[gestureIndex].displayGesture = gestureStore.currentModel.GetMainPrototype();
+        gestureStore.currentModel.update(cloneData[gestureIndex].getCroppedData(), this.latestTimestamp);
+        cloneData[gestureIndex].displayGesture = gestureStore.currentModel.mainPrototype;
 
         this.gestures = cloneData;
         this.markDirty();
     }
+
 
     private receiveMessage(data: pxt.editor.ExtensionMessage) {
         const ev = data as pxt.editor.ExtensionEvent;
@@ -188,7 +212,8 @@ export class GestureStore {
         this.gestures.push(new Gesture());
         // TODO: change this method of keeping the current gesture index to something more reliable
         this.curGestureIndex = this.gestures.length - 1;
-        this.models.push(new SingleDTWCore(this.gestures[this.curGestureIndex].gestureID + 1, this.gestures[this.curGestureIndex].name));
+        const model = new SingleDTWCore(this.gestures[this.curGestureIndex].gestureID + 1, this.gestures[this.curGestureIndex].name);
+        this.models.push(model);
     }
 
 
@@ -202,8 +227,8 @@ export class GestureStore {
 
         const codeBlocks: string[] = this.models
             .filter(m => m.isRunning())
-            .map(m => m.GenerateBlock());
-        const code = SingleDTWCore.GenerateNamespace(codeBlocks);
+            .map(m => m.generateBlock());
+        const code = SingleDTWCore.generateNamespace(codeBlocks);
         const json = JSON.stringify(this.gestures, null, 2);
         this.sendRequest("extwritecode", { code, json });
         this.hasBeenModified = false;
@@ -211,12 +236,14 @@ export class GestureStore {
         this.gestures = cloneData; // FIXME: Why did Majeed do this?
     }
 
+
     markDirty() {
         if (!this.hasBeenModified) {
             this.hasBeenModified = true;
             debounce(() => this.saveBlocks(), 2000);
         }
     }
+
 
     @action private loadBlocks(code: string, json: string) {
         if (!json) return;
@@ -229,21 +256,27 @@ export class GestureStore {
 
         gestures.forEach(importedGesture => {
             let parsedGesture = new Gesture();
-            parsedGesture.description = importedGesture.description;
-            parsedGesture.name = importedGesture.name;
-            parsedGesture.labelNumber = importedGesture.labelNumber;
-            for (let j = 0; j < importedGesture.samples.length; j++) {
-                parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
+            try {
+                parsedGesture.description = importedGesture.description;
+                parsedGesture.name = importedGesture.name;
+                parsedGesture.labelNumber = importedGesture.labelNumber;
+                for (let j = 0; j < importedGesture.samples.length; j++) {
+                    parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
+                }
+                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+                cloneData.push(parsedGesture);
+            } catch {
+                // If a parse error occurs, skip this one.
+                return;
             }
-            parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-            cloneData.push(parsedGesture);
             let curIndex = cloneData.length - 1;
             let newModel = new SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
-            newModel.Update(cloneData[curIndex].getCroppedData());
+            newModel.update(cloneData[curIndex].getCroppedData(), this.latestTimestamp);
             this.models.push(newModel);
         });
         this.gestures = cloneData;
     }
+
 
     /**
      * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
@@ -251,6 +284,8 @@ export class GestureStore {
      */
     parseJSONGesture(importedSample: any): GestureExampleData {
         let sample = new GestureExampleData();
+        if (!importedSample || !importedSample.rawData || importedSample.rawData.length === 0)
+            throw 'bad gesture';
 
         for (let k = 0; k < importedSample.rawData.length; k++) {
             let vec = importedSample.rawData[k];
@@ -267,6 +302,7 @@ export class GestureStore {
         return sample;
     }
 
+
     /**
      * Removes the currently active gesture if it contains no samples
      */
@@ -280,7 +316,6 @@ export class GestureStore {
             this.gestures = cloneData;
         }
     }
-
 
 }
 

@@ -28,7 +28,7 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
         const renameGesture = (event: any) => {
             // let cloneData = this.state.data.slice();
             this.props.gesture.name = event.target.value;
-            this.props.model.UpdateName(this.props.gesture.name);
+            this.props.model.updateName(this.props.gesture.name);
 
             // this.setState({ data: cloneData });
             // this.markDirty();

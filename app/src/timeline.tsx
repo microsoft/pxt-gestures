@@ -10,6 +10,7 @@ export interface MotionTimelineProps {
     hideStillMotion: boolean;
     readings: MotionReading[];
     numReadingsToShow: number; // can be greater than current readings.length
+    isMatch(time: number): boolean;
 }
 
 
@@ -36,25 +37,29 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
         return (
             <div style={{ width: this.props.width, height: this.props.height, top: 0, left: 0, position: 'absolute' }}>
                 {
-                    this.props.readings.map((reading, i) => {
+                    this.props.readings.map((reading, readingIndex) => {
                         const style = getStyleForReading(reading);
                         style.position = 'absolute';
-                        style.left = i * spacing;
+                        style.left = readingIndex * spacing;
                         style.top = 0;
-                        style.opacity = this.props.hideStillMotion && delta[i] < THRESHOLD ? 0 : i / this.props.numReadingsToShow;
-                        return <svg
-                            key={i}
-                            width={this.props.height + 2}
-                            height={this.props.height + 2}
-                            style={style}
-                        >
-                            <circle
-                                className='orientation-history'
-                                cx={radius + 1}
-                                cy={radius + 1}
-                                r={radius}
-                            />
-                        </svg>
+                        const isMatch = this.props.isMatch(readingIndex);
+                        const hide = this.props.hideStillMotion && delta[readingIndex] < THRESHOLD && !isMatch;
+                        style.opacity = hide  ? 0 : readingIndex / this.props.numReadingsToShow;
+                        return (
+                            <svg
+                                key={readingIndex}
+                                width={this.props.height + 2}
+                                height={this.props.height + 2}
+                                style={style}
+                            >
+                                <circle
+                                    className={'orientation-history' + (isMatch ? ' match' : '')}
+                                    cx={radius + 1}
+                                    cy={radius + 1}
+                                    r={radius}
+                                />
+                            </svg>
+                        );
                     }).reverse() // to get the desired z order
                 }
             </div >

@@ -120,6 +120,7 @@ export class GestureExample extends React.Component<GestureExampleProps, {}> {
                 <div style={{ position: 'relative', width: 200, height: 100 }}>
                     <MotionTimeline
                         readings={this.props.example.motion}
+                        isMatch={t => false}
                         numReadingsToShow={this.props.example.motion.length}
                         width={200}
                         height={100}

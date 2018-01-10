@@ -1,4 +1,4 @@
-import * as Algorithms from './algorithms';
+import * as algo from './algorithms';
 import { MotionReading, Match, GestureExampleData } from './gesture-data';
 
 
@@ -8,8 +8,8 @@ export class SingleDTWCore {
     private gestureName: string;
     private description: string;
 
-    private dtw: Algorithms.DTW<MotionReading>;
-    private dba: Algorithms.DBA<MotionReading>;
+    private dtw: algo.DTW<MotionReading>;
+    private dba: algo.DBA<MotionReading>;
 
     private refPrototype: MotionReading[];
     public threshold: number;
@@ -26,7 +26,7 @@ export class SingleDTWCore {
         return this.running;
     }
 
-    public EnableRunning() {
+    public enableRunning() {
         this.running = true;
     }
 
@@ -36,7 +36,7 @@ export class SingleDTWCore {
 
     constructor(classNum: number, gestureName: string) {
         this.classNumber = classNum;
-        this.dba = new Algorithms.DBA<MotionReading>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
+        this.dba = new algo.DBA<MotionReading>(algo.EuclideanDistanceFast, algo.average);
         this.running = false;
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
@@ -48,17 +48,17 @@ export class SingleDTWCore {
     }
 
 
-    public UpdateName(newName: string) {
+    public updateName(newName: string) {
         this.gestureName = newName;
     }
 
 
-    public UpdateDescription(newDescription: string) {
+    public updateDescription(newDescription: string) {
         this.description = newDescription;
     }
 
 
-    public Update(data: MotionReading[][]) {
+    public update(data: MotionReading[][], startTime: number) {
         if (data.length == 0) {
             // reset
             this.running = false;
@@ -82,16 +82,16 @@ export class SingleDTWCore {
 
         this.avgLength = Math.round(lengthSum / data.length);
 
-        this.refPrototype = Algorithms.roundVecArray(this.dba.computeKMeans(trainData, 1, 10, 10, 0.01)[0].mean);
-        this.threshold = Math.round(Algorithms.findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, Algorithms.EuclideanDistanceFast, 0.1, 5));
-
+        this.refPrototype = algo.roundVecArray(this.dba.computeKMeans(trainData, 1, 10, 10, 0.01)[0].mean);
+        this.threshold = Math.round(algo.findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, algo.EuclideanDistanceFast, 0.1, 5));
+ 
         // update the Spring algorithm
         // reset the Spring algorithm
-        this.dtw = new Algorithms.DTW<MotionReading>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        this.dtw = new algo.DTW<MotionReading>(this.refPrototype, startTime, this.threshold, this.classNumber, this.avgLength, algo.EuclideanDistanceFast);
         this.running = true;
     }
 
-    public GetMainPrototype() {
+    public get mainPrototype() {
         let mainSample = new GestureExampleData();
         mainSample.motion = this.refPrototype;
         mainSample.cropEndIndex = this.refPrototype.length - 1;
@@ -104,8 +104,8 @@ export class SingleDTWCore {
     }
 
 
-    public Feed(xt: MotionReading): Match {
-        return this.dtw.Feed(xt);
+    public feed(xt: MotionReading): Match {
+        return this.dtw.feed(xt);
     }
 
     // make sure that it's not conflicting with any of these event ids:
@@ -113,7 +113,7 @@ export class SingleDTWCore {
 
     // this will just generate the namespace along with the algorithms.
     // it will then be populated with each gesture.GenerateBlock();
-    public static GenerateNamespace(generatedCodeBlocks: string[]): string {
+    public static generateNamespace(generatedCodeBlocks: string[]): string {
         return `namespace Gestures {
 ${generatedCodeBlocks.join('\n')}
 }
@@ -122,7 +122,7 @@ ${generatedCodeBlocks.join('\n')}
 
 
     // will just return 
-    public GenerateBlock(): string {
+    public generateBlock(): string {
         let uniqueId: string = this.classNumber.toString();
         // TODO: make sure that gesture names are unique (within a program) => otherwise ask the user to change/delete or merge their data.
         // TODO: this will definitely break if the user enters numbers or ...
