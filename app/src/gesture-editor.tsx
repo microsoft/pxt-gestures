@@ -106,7 +106,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                                     <MotionTimeline
                                         readings={gestureStore.readings}
                                         numReadingsToShow={gestureStore.readingLimit}
-                                        width={600}
+                                        width={700}
                                         height={200}
                                         hideStillMotion={true}
                                     />
