@@ -28,7 +28,7 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
 
     public render() {
         const radius = this.props.height * 0.5;
-        const spacing = (this.props.width - radius) / this.props.numReadingsToShow;
+        const spacing = (this.props.width - 2 * radius) / this.props.numReadingsToShow;
         const delta = this.getAmountMoving();
         const THRESHOLD = Math.PI / 10;
         return (
@@ -37,7 +37,7 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
                     this.props.readings.map((reading, i) => {
                         const style = getStyleForReading(reading);
                         style.position = 'absolute';
-                        style.left = (this.props.numReadingsToShow - 1 - i) * spacing;
+                        style.left = i * spacing;
                         style.top = 0;
                         style.opacity = this.props.hideStillMotion && delta[i] < THRESHOLD ? 0 : i / this.props.numReadingsToShow;
                         return <svg
@@ -53,7 +53,7 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
                                 r={radius}
                             />
                         </svg>
-                    })
+                    }).reverse() // to get the desired z order
                 }
             </div >
         );

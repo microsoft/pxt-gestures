@@ -28,7 +28,7 @@ export class OrientedDevice extends React.Component<OrientedDeviceProps, {}> {
         const backShowing = -HALF_PI <= orientation.roll && orientation.roll <= HALF_PI;
         const imgSource = backShowing ? "/circuitplayground-back.png" : "/circuitplayground-front.png";
         return (
-            <div style={{ perspective: "500px", zIndex: 99, top: 0, left: 0, position: 'absolute' }}>
+            <div style={{ perspective: "500px", zIndex: 99, top: 0, left: 500, position: 'absolute' }}>
                 <img
                     src={imgSource}
                     width={this.props.width}

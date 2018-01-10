@@ -102,14 +102,14 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                             this.props.connected
                                 ?
                                 <div style={{ position: 'absolute' }}>
+                                    <OrientedDevice width={200} height={200} />
                                     <MotionTimeline
                                         readings={gestureStore.readings}
                                         numReadingsToShow={gestureStore.readingLimit}
-                                        width={500}
+                                        width={600}
                                         height={200}
                                         hideStillMotion={true}
                                     />
-                                    <OrientedDevice width={200} height={200} />
                                 </div>
                                 :
                                 downloadStreamerUi
