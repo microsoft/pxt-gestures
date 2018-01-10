@@ -117,8 +117,12 @@ export class Match {
         public classNum: number) {
     }
 
-    public length(): number {
+    public get length(): number {
         return this.Te - this.Ts;
+    }
+
+    public get valid(): boolean {
+        return this.Ts > 0 || this.Te > 0;
     }
 }
 

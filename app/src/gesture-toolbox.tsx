@@ -33,8 +33,9 @@ export class GestureToolbox extends React.Component<{}, {}> {
         serialData.register(newData => {
             if (gestureStore.currentModel && gestureStore.currentModel.isRunning()) {
                 let match = gestureStore.currentModel.Feed(newData.accVec);
-                if (this.gestureEditor)
+                if (this.gestureEditor && match.valid) {
                     this.gestureEditor.newMatch(match);
+                }
             }
         })
     }

@@ -22,8 +22,10 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
         }
         return this.props.readings
             .map((rd, i) =>
-                (i == 0 ? 0 : diffOrientation(this.props.readings[i - 1], rd)) +
-                (i == this.props.readings.length - 1 ? 0 : diffOrientation(this.props.readings[i + 1], rd)));
+                (i - 2 < 0 ? 0 : diffOrientation(this.props.readings[i - 2], rd)) +
+                (i - 1 < 0 ? 0 : diffOrientation(this.props.readings[i - 1], rd)) +
+                (i + 1 >= this.props.readings.length ? 0 : diffOrientation(this.props.readings[i + 1], rd)) +
+                (i + 2 >= this.props.readings.length ? 0 : diffOrientation(this.props.readings[i + 2], rd)));
     }
 
     public render() {
