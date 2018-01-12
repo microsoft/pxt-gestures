@@ -165,7 +165,7 @@
 }
 
 .orientation-history.match {
-    fill: rgba(0, 255, 0, 0.5);
+    fill: yellow;
     stroke: #888;
     stroke-width: 1px;
 }

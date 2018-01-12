@@ -15,7 +15,6 @@ export interface GestureExampleProps {
     graphHeight: number;
     maxVal: number;
     onDeleteHandler?: (g: Gesture, s: GestureExampleData) => void,
-    onCropHandler?: (g: Gesture, s: GestureExampleData, newStart: number, newEnd: number) => void,
     style?: any
 }
 
@@ -75,7 +74,6 @@ export class GestureExample extends React.Component<GestureExampleProps, {}> {
         // re-render based on
         this.updateClipper(this.props.example.cropStartIndex, this.props.example.cropEndIndex + 1, true);
         this.svgCrop.style("opacity", 0);
-        this.props.onCropHandler(this.props.gesture, this.props.example, this.props.example.cropStartIndex, this.props.example.cropEndIndex);
     }
 
     // on "edit" click 
@@ -93,31 +91,9 @@ export class GestureExample extends React.Component<GestureExampleProps, {}> {
     }
 
     render() {
-        const headerStyle = { height: "60px" };
-
         return (
-            <div className="ui segments sample-graph" style={this.props.style}>
-                {
-                    this.props.editable == false ? undefined :
-                        <div className="ui segment inverted" style={headerStyle}>
-                            <div> {
-                                this.editMode
-                                    ?
-                                    <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
-                                        <i className="checkmark icon" />
-                                    </button>
-                                    :
-                                    <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
-                                        <i className="crop icon" />
-                                    </button>
-                            }
-                                <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
-                                    <i className="remove icon" />
-                                </button>
-                            </div>
-                        </div>
-                }
-                <div style={{ position: 'relative', width: 200, height: 100 }}>
+            <div className="ui row sample-graph" style={this.props.style}>
+                <div style={{ position: 'relative', width: 200, height: 100, display: 'inline-block' }}>
                     <MotionTimeline
                         readings={this.props.example.motion}
                         isMatch={t => false}
@@ -127,6 +103,19 @@ export class GestureExample extends React.Component<GestureExampleProps, {}> {
                         hideStillMotion={false}
                     />
                 </div>
+                {
+                    this.props.editable
+                        ?
+                        <button
+                            onClick={this.handleDelete} 
+                            className="ui clear icon button float right"
+                            style={{ verticalAlign: 'top' }}
+                        >
+                            <i className="remove icon" />
+                        </button>
+                        :
+                        undefined
+                }
             </div>
         );
     }

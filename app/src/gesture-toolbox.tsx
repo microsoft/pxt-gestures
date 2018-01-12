@@ -95,26 +95,24 @@ export class GestureToolbox extends React.Component<{}, {}> {
 
 
         return (
-            <div className="ui">
-                <div className="ui bottom attached tab active tabsegment">
-                    {
-                        this.editMode
-                            ?
-                            <GestureEditor
-                                ref={ge => this.gestureEditor = ge}
-                                gesture={gestureStore.currentGesture}
-                                model={gestureStore.currentModel}
-                                connected={gestureStore.connected}
-                                onNewSampleRecorded={onNewSampleRecorded}
-                                backToMain={backToMain}
-                            />
-                            :
-                            <GestureGallery
-                                newGesture={newGesture}
-                                editGesture={editGesture}
-                            />
-                    }
-                </div>
+            <div className="ui container">
+                {
+                    this.editMode
+                        ?
+                        <GestureEditor
+                            ref={ge => this.gestureEditor = ge}
+                            gesture={gestureStore.currentGesture}
+                            model={gestureStore.currentModel}
+                            connected={gestureStore.connected}
+                            onNewSampleRecorded={onNewSampleRecorded}
+                            backToMain={backToMain}
+                        />
+                        :
+                        <GestureGallery
+                            newGesture={newGesture}
+                            editGesture={editGesture}
+                        />
+                }
             </div>
         )
     }

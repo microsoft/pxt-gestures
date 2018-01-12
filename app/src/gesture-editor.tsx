@@ -32,6 +32,11 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
             gestureStore.deleteSample(gesture, sample);
         }
 
+        const renameGesture = (event: any) => {
+            this.props.gesture.name = event.target.value;
+            this.props.model.updateName(event.target.value);
+        }
+
         const downloadStreamerUi = (
             <div className="ui message">
                 <div className="content">
@@ -50,53 +55,72 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
             </div>);
 
         return (
-            <div className="ui" id="gesture-editor">
-                <div className="ui">
+            <div className="ui " id="gesture-editor">
+                <div className="ui row left floating">
                     <button className="ui button icon huge clear" id="back-btn" onClick={this.props.backToMain}>
                         <i className="icon chevron left large"></i>
                     </button>
                     {gestureStore.hasBeenModified ? <span className="ui floated left">*</span> : undefined}
+
                 </div>
-                <div className="ui three column grid">
-                    <div className="ten wide column">
+
+                <div className="ui grid">
+
+                    <div className="ui twelve wide column">
+                        <div className="ui form">
+                            <div className="inline fields">
+                                <div className="field">
+                                    <label>Name</label>
+                                    <input
+                                        type="text"
+                                        ref="gesture-name-input"
+                                        value={this.props.gesture.name}
+                                        // onFocus={() => { this.recorder ? this.recorder.PauseEventListeners() : undefined; }}
+                                        // onBlur={() => { this.recorder ? this.recorder.ResumeEventListeners() : undefined }}
+                                        onChange={renameGesture}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {
                             this.props.connected
                                 ?
-                                <div style={{ position: 'absolute' }}>
+                                <div className="ui grid">
+                                    <div className="ui row">
+                                        <RecorderButton
+                                            gesture={this.props.gesture}
+                                            onNewSampleRecorded={this.props.onNewSampleRecorded}
+                                        />
+                                    </div>
+                                    <div className="ui row" style={{ height: 200 }}>
 
-                                    <OrientedDevice width={200} height={200} />
+                                        <OrientedDevice width={200} height={200} />
 
-                                    <MotionTimeline
-                                        readings={gestureStore.readings}
-                                        isMatch={t => gestureStore.isMatch(t)}
-                                        numReadingsToShow={gestureStore.readingLimit}
-                                        width={700}
-                                        height={200}
-                                        hideStillMotion={true}
-                                    />
+                                        <MotionTimeline
+                                            readings={gestureStore.readings}
+                                            isMatch={t => gestureStore.isMatch(t)}
+                                            numReadingsToShow={gestureStore.readingLimit}
+                                            width={700}
+                                            height={200}
+                                            hideStillMotion={true}
+                                        />
+                                    </div>
                                 </div>
                                 :
                                 downloadStreamerUi
                         }
                     </div>
 
-                    <div className="three wide column">
-                        {
-                            this.props.connected ?
-                                <RecorderButton
-                                    gesture={this.props.gesture}
-                                    onNewSampleRecorded={this.props.onNewSampleRecorded}
-                                /> :
-                                undefined
-                        }
+                    <div className="four wide column">
+                        <RecordedSamples
+                            gesture={gestureStore.currentGesture}
+                            model={gestureStore.currentModel}
+                            onDeleteHandler={onSampleDelete}
+                        />
                     </div>
-                </div>
 
-                <RecordedSamples
-                    gesture={gestureStore.currentGesture}
-                    model={gestureStore.currentModel}
-                    onDeleteHandler={onSampleDelete}
-                />
+                </div>
             </div>
         );
     }

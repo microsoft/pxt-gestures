@@ -60,7 +60,7 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
                                 />
                             </svg>
                         );
-                    }).reverse() // to get the desired z order
+                    })
                 }
             </div >
         );

@@ -256,19 +256,14 @@ export class GestureStore {
 
         gestures.forEach(importedGesture => {
             let parsedGesture = new Gesture();
-            try {
-                parsedGesture.description = importedGesture.description;
-                parsedGesture.name = importedGesture.name;
-                parsedGesture.labelNumber = importedGesture.labelNumber;
-                for (let j = 0; j < importedGesture.samples.length; j++) {
-                    parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
-                }
-                parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-                cloneData.push(parsedGesture);
-            } catch {
-                // If a parse error occurs, skip this one.
-                return;
+            parsedGesture.description = importedGesture.description;
+            parsedGesture.name = importedGesture.name;
+            parsedGesture.labelNumber = importedGesture.labelNumber;
+            for (let j = 0; j < importedGesture.samples.length; j++) {
+                parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
             }
+            parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+            cloneData.push(parsedGesture);
             let curIndex = cloneData.length - 1;
             let newModel = new SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
             newModel.update(cloneData[curIndex].getCroppedData(), this.latestTimestamp);
@@ -284,12 +279,10 @@ export class GestureStore {
      */
     parseJSONGesture(importedSample: any): GestureExampleData {
         let sample = new GestureExampleData();
-        if (!importedSample || !importedSample.rawData || importedSample.rawData.length === 0)
-            throw 'bad gesture';
 
-        for (let k = 0; k < importedSample.rawData.length; k++) {
-            let vec = importedSample.rawData[k];
-            sample.motion.push(new MotionReading(vec.X, vec.Y, vec.Z));
+        for (let k = 0; k < importedSample.motion.length; k++) {
+            let vec = importedSample.motion[k];
+            sample.motion.push(new MotionReading(vec.accelX, vec.accelY, vec.accelZ));
         }
 
         sample.videoLink = importedSample.videoLink;
@@ -314,6 +307,14 @@ export class GestureStore {
             // delete the model
             this.models.splice(this.curGestureIndex, 1);
             this.gestures = cloneData;
+        }
+    }
+
+    @action public deleteGesture(gesture: Gesture) {
+        const index = this.gestures.indexOf(gesture);
+        if (index >= 0) {
+            this.gestures.splice(index, 1);
+            this.models.splice(index, 1);
         }
     }
 
