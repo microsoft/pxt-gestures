@@ -78,6 +78,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                                         // onFocus={() => { this.recorder ? this.recorder.PauseEventListeners() : undefined; }}
                                         // onBlur={() => { this.recorder ? this.recorder.ResumeEventListeners() : undefined }}
                                         onChange={renameGesture}
+                                        onKeyDown={e => { if (e.keyCode == 13) e.currentTarget.blur(); }}
                                     />
                                 </div>
                             </div>
