@@ -80,12 +80,6 @@
     display: inline-block;
 }
 
-.gesture-container {
-    display: inline-block;
-    position: relative;
-    top: 1px;
-}
-
 
 .samples-container {
     height: 250px;
@@ -168,4 +162,9 @@
     fill: yellow;
     stroke: #888;
     stroke-width: 1px;
+}
+
+.gesture-name-gallery {
+    padding-left: 10px;
+    padding-top: 10px;
 }

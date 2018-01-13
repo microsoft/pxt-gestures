@@ -120,7 +120,7 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
         this.setRecordingMethod(this.recordMode);
     }
 
-    private onRecordMethodChange (value: string, text: string) {
+    private onRecordMethodChange(value: string, text: string) {
         this.isRecording = false;
         switch (value) {
             case "held down":
@@ -135,9 +135,10 @@ export class RecorderButton extends React.Component<RecorderButtonProps, {}> {
     }
 
     private onKeyChange(value: string, text: string) {
-        switch(value) {
+        switch (value) {
             case "Enter": this.triggerKey = ENTER; break;
             case "spacebar": this.triggerKey = SPACEBAR; break;
+            default: break;
         }
     }
 

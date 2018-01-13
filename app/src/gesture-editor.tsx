@@ -56,7 +56,8 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
 
         return (
             <div className="ui " id="gesture-editor">
-                <div className="ui row left floating">
+            
+                <div className="ui text menu">
                     <button className="ui button icon huge clear" id="back-btn" onClick={this.props.backToMain}>
                         <i className="icon chevron left large"></i>
                     </button>

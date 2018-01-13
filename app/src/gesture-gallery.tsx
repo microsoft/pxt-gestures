@@ -36,31 +36,30 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                 </div>
 
                 <div className="ui link row" >
-                    <div className="ui grid container">
+                    <div className="ui cards">
                         {
                             gestureStore.gestures.map(gesture =>
                                 <div
-                                    className="ui card gesture-container"
+                                    className="ui card"
                                     key={gesture.gestureID}
-                                    style={{ margin: "0 15px 15px 0" }}
                                 >
                                     <div className="content">
-                                        <div
-                                            className="ui header left floated"
+                                        <a
+                                            className="header left floated gesture-name-gallery"
                                             onClick={() => { this.props.editGesture(gesture.gestureID) }}
                                         >
                                             {gesture.name}
-                                        </div>
+                                        </a>
+
                                         <button
                                             onClick={e => {
                                                 ($('#delete-gesture') as any).modal('show');
                                                 e.stopPropagation();
                                             }}
-                                            className="ui icon button clear right floated"
+                                            className="ui icon button clear right floated aligned top"
                                         >
                                             <i className="trash icon" />
                                         </button>
-
                                         <div className="ui mini modal" id="delete-gesture">
                                             <div className="header">Delete Gesture</div>
                                             <div className="content">
