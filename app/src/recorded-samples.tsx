@@ -43,7 +43,7 @@ export class RecordedSamples extends React.Component<RecordedSamplesProps, {}> {
                 </div> */}
 
                 <div className="header">Examples</div>
-                <div className="ui items">
+                <div className="ui items motion-examples">
                     {
                         this.props.gesture.samples.map(sample =>
                             <div className="ui item" key={sample.sampleID}>

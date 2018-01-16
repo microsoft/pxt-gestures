@@ -57,8 +57,17 @@
     border-width: 1px;
 }
 
-.sample-graph {
-    display: inline-block;
+.motion-example {
+    white-space: nowrap;
+}
+
+body {
+    overflow-y: hidden;
+}
+
+.motion-examples {
+    max-height: 500px; /* FIXME: different size screens */
+    overflow-y: auto;
 }
 
 #gestures-fluid-container {

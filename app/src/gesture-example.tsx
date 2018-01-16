@@ -92,7 +92,7 @@ export class GestureExample extends React.Component<GestureExampleProps, {}> {
 
     render() {
         return (
-            <div className="ui row sample-graph" style={this.props.style}>
+            <div className="ui row motion-example" style={this.props.style}>
                 <div style={{ position: 'relative', width: 200, height: 100, display: 'inline-block' }}>
                     <MotionTimeline
                         readings={this.props.example.motion}
