@@ -63,7 +63,7 @@ export class GestureStore {
 
             if (this.currentModel && this.currentModel.isRunning()) {
                 let match = this.currentModel.feed(data.accVec);
-                if (match.isValid) {
+                if (match) {
                     this.matches.push(match);
                 }
             }
@@ -110,7 +110,7 @@ export class GestureStore {
         cloneData[gi].samples.splice(si, 1);
         const model = this.models[gi];
         model.update(cloneData[gi].getCroppedData(), this.latestTimestamp);
-        cloneData[gi].displayGesture = model.mainPrototype;
+        cloneData[gi].displayGesture = model.prototype;
 
         this.gestures = cloneData;
         this.markDirty();
@@ -123,7 +123,7 @@ export class GestureStore {
         // do not change the order of the following lines:
         cloneData[gestureIndex].samples.unshift(newSample);
         gestureStore.currentModel.update(cloneData[gestureIndex].getCroppedData(), this.latestTimestamp);
-        cloneData[gestureIndex].displayGesture = gestureStore.currentModel.mainPrototype;
+        cloneData[gestureIndex].displayGesture = gestureStore.currentModel.prototype;
 
         this.gestures = cloneData;
         this.markDirty();
@@ -248,52 +248,19 @@ export class GestureStore {
     @action private loadBlocks(code: string, json: string) {
         if (!json) return;
 
-        let gestures: Gesture[] = JSON.parse(json);
-        if (!gestures) return;
+        let jsonGestures: Gesture[] = JSON.parse(json);
+        if (!jsonGestures) return;
 
-        let cloneData: Gesture[] = []; // this.state.data.slice();
-        this.models = [];
+        this.gestures = jsonGestures.map(importedGesture => 
+            Gesture.parseGesture(importedGesture));
 
-        gestures.forEach(importedGesture => {
-            let parsedGesture = new Gesture();
-            parsedGesture.description = importedGesture.description;
-            parsedGesture.name = importedGesture.name;
-            parsedGesture.labelNumber = importedGesture.labelNumber;
-            for (let j = 0; j < importedGesture.samples.length; j++) {
-                parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
-            }
-            parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
-            cloneData.push(parsedGesture);
-            let curIndex = cloneData.length - 1;
-            let newModel = new SingleDTWCore(cloneData[curIndex].gestureID + 1, cloneData[curIndex].name);
-            newModel.update(cloneData[curIndex].getCroppedData(), this.latestTimestamp);
-            this.models.push(newModel);
+        this.models = this.gestures.map(gesture => {
+            let model = new SingleDTWCore(gesture.gestureID + 1, gesture.name);
+            model.update(gesture.getCroppedData(), this.latestTimestamp);
+            return model;
         });
-        this.gestures = cloneData;
     }
 
-
-    /**
-     * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
-     * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
-     */
-    parseJSONGesture(importedSample: any): GestureExampleData {
-        let sample = new GestureExampleData();
-
-        for (let k = 0; k < importedSample.motion.length; k++) {
-            let vec = importedSample.motion[k];
-            sample.motion.push(new MotionReading(vec.accelX, vec.accelY, vec.accelZ));
-        }
-
-        sample.videoLink = importedSample.videoLink;
-        sample.videoData = importedSample.videoData;
-        sample.startTime = importedSample.startTime;
-        sample.endTime = importedSample.endTime;
-        sample.cropStartIndex = importedSample.cropStartIndex;
-        sample.cropEndIndex = importedSample.cropEndIndex;
-
-        return sample;
-    }
 
 
     /**

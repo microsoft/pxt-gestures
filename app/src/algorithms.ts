@@ -4,7 +4,7 @@ import { MotionReading, Match } from './motion';
 
 export class DTW<SampleType> {
     private Y: SampleType[];
-    private eps: number;
+    private epsilon: number;
     private classNumber: number;
 
     private M: number;
@@ -35,7 +35,7 @@ export class DTW<SampleType> {
     constructor(_refPrototype: SampleType[], private startTime: number, _threshold: number, _classNum: number, _avgProtoLen: number,
         _distFun: (a: SampleType, b: SampleType) => number) {
         this.Y = _refPrototype;
-        this.eps = _threshold;
+        this.epsilon = _threshold;
         this.classNumber = _classNum;
 
         this.M = _refPrototype.length;
@@ -71,7 +71,7 @@ export class DTW<SampleType> {
 
 
     public feed(xt: SampleType): Match {
-        let predict = new Match(0, 0, 0, 0);
+        let match: Match = undefined;
 
         let t = this.t + 1;
         this.d = this.d2;
@@ -100,25 +100,30 @@ export class DTW<SampleType> {
             }
         }
 
-        if (this.dmin <= this.eps) {
-            let condition = true;
+        if (this.dmin <= this.epsilon) {
+            let matched = true;
             let matchLength = this.te - this.ts;
 
             if (matchLength > this.minLen && matchLength < this.maxLen) {
+
                 for (let i = 0; i <= this.M; i++) {
-                    if (!(this.d[i] >= this.dmin || this.s[i] > this.te)) {
-                        condition = false;
+                    if (this.d[i] < this.dmin && this.s[i] <= this.te) {
+                        matched = false;
+                        break;
                     }
                 }
 
-                if (condition) {
-                    predict = new Match(this.dmin, this.startTime + this.ts - 1, this.startTime + this.te - 1, this.classNumber);
+                if (matched) {
+                    match = new Match(this.dmin,
+                        this.startTime + this.ts - 1,
+                        this.startTime + this.te - 1,
+                        this.classNumber);
                     this.reset();
                 }
             }
         }
 
-        if (this.d[this.M] <= this.eps && this.d[this.M] < this.dmin) {
+        if (this.d[this.M] <= this.epsilon && this.d[this.M] < this.dmin) {
             this.dmin = this.d[this.M];
             this.ts = this.s[this.M];
             this.te = t;
@@ -128,7 +133,11 @@ export class DTW<SampleType> {
         this.s2 = this.s1; this.s1 = this.s;
         this.t = t;
 
-        return predict;
+        return match;
+    }
+
+    public findMatches(data: SampleType[]) {
+        return data.map(d => this.feed(d)).filter(m => m);
     }
 
 
@@ -381,48 +390,36 @@ export class DBA<SampleType> { // DTW Barycenter Average
 
 
 
-export function findMinimumThreshold(
-    prototypeArray: MotionReading[][],
-    referencePrototype: MotionReading[],
-    avgLen: number,
-    distFun: (a: MotionReading, b: MotionReading) => number,
-    step: number,
-    maxStep: number
+export function findThreshold(
+    motions: MotionReading[][],
+    motionPrototype: MotionReading[],
+    avgMotionLen: number,
+    computeDistance: (a: MotionReading, b: MotionReading) => number,
+    step: number = 0.1,
+    maxIterations: number = 5
 ): number {
     // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
     let threshold = 0;
-    let variance = MotionReading.variance(prototypeArray);
+    let variance = MotionReading.variance(motions);
     let iterateMore = true;
     let i = 0;
-    let predictMatch: Match[] = [];
+
+    const testSignal = (motion: MotionReading[]) =>
+        MotionReading.randomMotion(10)
+            .concat(motion)
+            .concat(MotionReading.randomMotion(10));
 
     do {
-        // TODO: make it more efficient by adding RESET function and accessors for the threshold 
-        let spring = new DTW<MotionReading>(referencePrototype, 0, threshold, 1, avgLen, distFun);
+        let spring = new DTW<MotionReading>(motionPrototype, 0, threshold, 1, avgMotionLen, computeDistance);
 
-        for (let k = 0; k < prototypeArray.length; k++) {
-            // run some random data
-            for (let r = 0; r < 10; r++) {
-                let m = spring.feed(MotionReading.random());
-                if (m.gestureClass != 0) predictMatch.push(m);
-            }
+        const matchedAll = motions.every(motion =>
+            spring.findMatches(testSignal(motion)).length > 0);
 
-            for (let r = 0; r < prototypeArray[k].length; r++) {
-                let m = spring.feed(prototypeArray[k][r]);
-                if (m.gestureClass != 0) predictMatch.push(m);
-            }
-
-            for (let r = 0; r < 10; r++) {
-                let m = spring.feed(MotionReading.random());
-                if (m.gestureClass != 0) predictMatch.push(m);
-            }
-        }
-
-        if (predictMatch.length == prototypeArray.length) {
+        if (matchedAll) {
             iterateMore = false;
         }
         i++;
-        if (i > maxStep) { return threshold; }
+        if (i > maxIterations) { break; }
 
         threshold = i * step * variance;
     } while (iterateMore);

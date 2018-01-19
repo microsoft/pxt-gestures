@@ -44,6 +44,41 @@ export class Gesture {
 
         return all_data;
     }
+
+    public static parseGesture(importedGesture: Gesture) {
+        let parsedGesture = new Gesture();
+        parsedGesture.description = importedGesture.description;
+        parsedGesture.name = importedGesture.name;
+        parsedGesture.labelNumber = importedGesture.labelNumber;
+        for (let j = 0; j < importedGesture.samples.length; j++) {
+            parsedGesture.samples.push(this.parseJSONGesture(importedGesture.samples[j]));
+        }
+        parsedGesture.displayGesture = this.parseJSONGesture(importedGesture.displayGesture);
+        return parsedGesture;
+    }
+
+    /**
+     * Populates a GestureSample object with a given javascript object of a GestureSample and returns it.
+     * @param importedSample the javascript object that contains a complete GestureSample (excpet the video data)
+     */
+    static parseJSONGesture(importedSample: any): GestureExampleData {
+        let sample = new GestureExampleData();
+
+        for (let k = 0; k < importedSample.motion.length; k++) {
+            let vec = importedSample.motion[k];
+            sample.motion.push(new MotionReading(vec.accelX, vec.accelY, vec.accelZ));
+        }
+
+        sample.videoLink = importedSample.videoLink;
+        sample.videoData = importedSample.videoData;
+        sample.startTime = importedSample.startTime;
+        sample.endTime = importedSample.endTime;
+        sample.cropStartIndex = importedSample.cropStartIndex;
+        sample.cropEndIndex = importedSample.cropEndIndex;
+
+        return sample;
+    }
+
 }
 
 
@@ -140,7 +175,18 @@ export class MotionReading {
     }
 
     public static random() {
-        return new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
+        return new MotionReading(
+            Math.random() * 2048 - 1024,
+            Math.random() * 2048 - 1024,
+            Math.random() * 2048 - 1024);
+    }
+
+    public static randomMotion(howMany: number) {
+        const data = [];
+        for (let i = 0; i < howMany; i++) {
+            data.push(MotionReading.random());
+        }
+        return data;
     }
 
     public static euclideanDistance(a: MotionReading, b: MotionReading): number {
@@ -231,10 +277,6 @@ export class Match {
 
     public get duration(): number {
         return this.endTime - this.startTime;
-    }
-
-    public get isValid(): boolean {
-        return this.startTime > 0 || this.endTime > 0;
     }
 }
 

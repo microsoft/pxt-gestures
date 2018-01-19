@@ -1,4 +1,4 @@
-import { findMinimumThreshold, DTW, DBA } from './algorithms';
+import { findThreshold, DTW, DBA } from './algorithms';
 import { MotionReading, Match, GestureExampleData } from './motion';
 
 
@@ -9,12 +9,10 @@ export class SingleDTWCore {
     private description: string;
     private dtw: DTW<MotionReading>;
     private dba: DBA<MotionReading>;
-    private refPrototype: MotionReading[];
+    private averageMotion: MotionReading[];
     public threshold: number;
     private running: boolean;
-
-    private avgLength: number;
-
+    private avgMotionLength: number;
 
     // used for generating unique event source IDs to be used in the custom.ts gesture block's code:
     private static EVENT_SRC_ID_COUNTER: number = 0;
@@ -52,49 +50,40 @@ export class SingleDTWCore {
     }
 
 
-    public updateDescription(newDescription: string) {
-        this.description = newDescription;
-    }
-
-
-    public update(data: MotionReading[][], startTime: number) {
-        if (data.length == 0) {
+    public update(motionExamples: MotionReading[][], startTime: number) {
+        if (motionExamples.length == 0) {
             // reset
             this.running = false;
-            this.avgLength = 0;
+            this.avgMotionLength = 0;
             this.threshold = 0;
-            this.refPrototype = [];
-
+            this.averageMotion = [];
             return;
         }
+
         // split data
         let trainData: MotionReading[][] = [];
         let thresholdData: MotionReading[][] = [];
-        let lengthSum = 0;
+        let sumSeriesLengths = 0;
 
-        for (let i = 0; i < data.length; i++) {
-            if (i % 2 == 0) trainData.push(data[i]);
-            else thresholdData.push(data[i]);
+        for (let i = 0; i < motionExamples.length; i++) {
+            if (i % 2 == 0) trainData.push(motionExamples[i]);
+            else thresholdData.push(motionExamples[i]);
 
-            lengthSum += data[i].length;
+            sumSeriesLengths += motionExamples[i].length;
         }
 
-        this.avgLength = Math.round(lengthSum / data.length);
-
-        this.refPrototype = this.dba.computeAverageSeries(trainData, 10, 0.01);
-        this.threshold = findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, MotionReading.euclideanDistanceFast, 0.1, 5);
-
-        // update the Spring algorithm
-        // reset the Spring algorithm
-        this.dtw = new DTW<MotionReading>(this.refPrototype, startTime, this.threshold, this.classNumber, this.avgLength, MotionReading.euclideanDistanceFast);
+        this.avgMotionLength = Math.round(sumSeriesLengths / motionExamples.length);
+        this.averageMotion = this.dba.computeAverageSeries(trainData, 10, 0.01);
+        this.threshold = findThreshold(thresholdData, this.averageMotion, this.avgMotionLength, MotionReading.euclideanDistanceFast);
+        this.dtw = new DTW<MotionReading>(this.averageMotion, startTime, this.threshold, this.classNumber, this.avgMotionLength, MotionReading.euclideanDistanceFast);
         this.running = true;
     }
 
 
-    public get mainPrototype() {
+    public get prototype() {
         let mainSample = new GestureExampleData();
-        mainSample.motion = this.refPrototype;
-        mainSample.cropEndIndex = this.refPrototype.length - 1;
+        mainSample.motion = this.averageMotion;
+        mainSample.cropEndIndex = this.averageMotion.length - 1;
         mainSample.cropStartIndex = 0;
         mainSample.startTime = 0;
         mainSample.endTime = 0;
@@ -156,8 +145,8 @@ ${generatedCodeBlocks.join('\n')}
 
         control.runInBackground(() => {
             const threshold = ${this.threshold};
-            const avgLength = ${this.avgLength};
-            const refPrototype = ${this.vecArrayToString(this.refPrototype)};
+            const avgLength = ${this.avgMotionLength};
+            const refPrototype = ${this.vecArrayToString(this.averageMotion)};
             const spring = new SpringAlgorithm(refPrototype, threshold, avgLength);
 
             while (true) {
