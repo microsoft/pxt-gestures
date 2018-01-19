@@ -1,6 +1,6 @@
 import * as React from "react";
 import { GestureExample } from "./gesture-example";
-import { Gesture, GestureExampleData } from "./gesture-data";
+import { Gesture, GestureExampleData } from "./motion";
 import { SingleDTWCore } from "./model";
 import { observer } from "mobx-react";
 

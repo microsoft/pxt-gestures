@@ -1,6 +1,6 @@
 import * as React from "react";
 import { RecorderButton } from "./recorder";
-import { Gesture, GestureExampleData } from "./gesture-data";
+import { Gesture, GestureExampleData } from "./motion";
 import { SingleDTWCore } from "./model";
 // import { RecognitionOverlay } from "./visualizations";
 import { observer } from "mobx-react";

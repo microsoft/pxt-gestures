@@ -1,5 +1,5 @@
-import * as algo from './algorithms';
-import { MotionReading, Match, GestureExampleData } from './gesture-data';
+import { findMinimumThreshold, DTW, DBA } from './algorithms';
+import { MotionReading, Match, GestureExampleData } from './motion';
 
 
 
@@ -7,15 +7,14 @@ export class SingleDTWCore {
     private classNumber: number;
     private gestureName: string;
     private description: string;
-
-    private dtw: algo.DTW<MotionReading>;
-    private dba: algo.DBA<MotionReading>;
-
+    private dtw: DTW<MotionReading>;
+    private dba: DBA<MotionReading>;
     private refPrototype: MotionReading[];
     public threshold: number;
-    public avgLength: number;
-
     private running: boolean;
+
+    private avgLength: number;
+
 
     // used for generating unique event source IDs to be used in the custom.ts gesture block's code:
     private static EVENT_SRC_ID_COUNTER: number = 0;
@@ -36,7 +35,7 @@ export class SingleDTWCore {
 
     constructor(classNum: number, gestureName: string) {
         this.classNumber = classNum;
-        this.dba = new algo.DBA<MotionReading>(algo.EuclideanDistanceFast, algo.average);
+        this.dba = new DBA<MotionReading>(MotionReading.euclideanDistanceFast, MotionReading.mean);
         this.running = false;
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
@@ -82,14 +81,15 @@ export class SingleDTWCore {
 
         this.avgLength = Math.round(lengthSum / data.length);
 
-        this.refPrototype = algo.roundVecArray(this.dba.computeKMeans(trainData, 1, 10, 10, 0.01)[0].mean);
-        this.threshold = Math.round(algo.findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, algo.EuclideanDistanceFast, 0.1, 5));
- 
+        this.refPrototype = this.dba.computeAverageSeries(trainData, 10, 0.01);
+        this.threshold = findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, MotionReading.euclideanDistanceFast, 0.1, 5);
+
         // update the Spring algorithm
         // reset the Spring algorithm
-        this.dtw = new algo.DTW<MotionReading>(this.refPrototype, startTime, this.threshold, this.classNumber, this.avgLength, algo.EuclideanDistanceFast);
+        this.dtw = new DTW<MotionReading>(this.refPrototype, startTime, this.threshold, this.classNumber, this.avgLength, MotionReading.euclideanDistanceFast);
         this.running = true;
     }
+
 
     public get mainPrototype() {
         let mainSample = new GestureExampleData();
@@ -99,7 +99,6 @@ export class SingleDTWCore {
         mainSample.startTime = 0;
         mainSample.endTime = 0;
         mainSample.videoLink = null;
-
         return mainSample;
     }
 

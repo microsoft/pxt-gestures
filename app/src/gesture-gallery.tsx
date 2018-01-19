@@ -2,7 +2,7 @@ import * as React from "react";
 import { gestureStore } from "./gesture-store";
 import { GestureExample } from "./gesture-example";
 import { observer } from "mobx-react";
-import { Gesture } from "./gesture-data";
+import { Gesture } from "./motion";
 
 
 

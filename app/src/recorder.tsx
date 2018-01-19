@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MotionReading, GestureExampleData, Gesture } from './gesture-data';
+import { MotionReading, GestureExampleData, Gesture } from './motion';
 import { serialData, SerialData } from './serial-data';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';

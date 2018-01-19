@@ -1,5 +1,5 @@
 import { computed, observable, action } from "mobx";
-import { Gesture, MotionReading, GestureExampleData, Match } from "./gesture-data";
+import { Gesture, MotionReading, GestureExampleData, Match } from "./motion";
 import { SingleDTWCore } from "./model";
 import { serialData } from "./serial-data";
 
@@ -63,7 +63,7 @@ export class GestureStore {
 
             if (this.currentModel && this.currentModel.isRunning()) {
                 let match = this.currentModel.feed(data.accVec);
-                if (match.valid) {
+                if (match.isValid) {
                     this.matches.push(match);
                 }
             }
@@ -92,8 +92,8 @@ export class GestureStore {
 
 
     public isMatch(readingIndex: number): boolean {
-        const t = this.latestTimestamp - (this.readings.length - 1 - readingIndex);
-        return this.matches.findIndex(m => m.Ts <= t && t <= m.Te) >= 0;
+        const time = this.latestTimestamp - (this.readings.length - 1 - readingIndex);
+        return this.matches.findIndex(m => m.startTime <= time && time <= m.endTime) >= 0;
     }
 
 

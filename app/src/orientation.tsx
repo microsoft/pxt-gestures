@@ -1,7 +1,7 @@
 import * as React from "react";
 import { observer } from "mobx-react";
 import { gestureStore } from "./gesture-store";
-import { MotionReading } from "./gesture-data";
+import { MotionReading } from "./motion";
 
 
 const HALF_PI = Math.PI * 0.5;

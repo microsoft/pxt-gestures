@@ -1,7 +1,7 @@
 import * as React from "react";
 import { getStyleForReading } from "./orientation";
 import { observer } from "mobx-react";
-import { MotionReading } from "./gesture-data";
+import { MotionReading } from "./motion";
 
 
 export interface MotionTimelineProps {

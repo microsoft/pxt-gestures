@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/d3/index.d.ts"/>
 
 import * as React from "react";
-import { Gesture, GestureExampleData } from "./gesture-data";
+import { Gesture, GestureExampleData } from "./motion";
 import { observer } from "mobx-react";
 import { MotionTimeline } from "./timeline";
 import { observable } from "mobx";

@@ -1,51 +1,5 @@
-import { MotionReading, Match } from './gesture-data';
+import { MotionReading, Match } from './motion';
 
-
-export function EuclideanDistance(a: MotionReading, b: MotionReading): number {
-    // L2 Norm:
-    return Math.sqrt(Math.pow(a.accelX - b.accelX, 2) + Math.pow(a.accelY - b.accelY, 2) + Math.pow(a.accelZ - b.accelZ, 2));
-}
-
-
-export function ManhattanDistance(a: MotionReading, b: MotionReading): number {
-    // L1 Distance:
-    return Math.abs(a.accelX - b.accelX) + Math.abs(a.accelY - b.accelY) + Math.abs(a.accelZ - b.accelZ);
-}
-
-
-export function EuclideanDistanceFast(a: MotionReading, b: MotionReading): number {
-    // L2 Norm:
-    return IntegerSqrt((a.accelX - b.accelX) * (a.accelX - b.accelX) + (a.accelY - b.accelY) * (a.accelY - b.accelY) + (a.accelZ - b.accelZ) * (a.accelZ - b.accelZ));
-}
-
-
-export function IntegerSqrt(n: number) {
-    if (n < 0) return -1;
-
-    let shift = 2;
-    let nShifted = n >> shift;
-
-    while (nShifted != 0 && nShifted != n) {
-        shift += 2;
-        nShifted = n >> shift;
-    }
-
-    shift -= 2;
-
-    let result = 0;
-
-    while (shift >= 0) {
-        result = result << 1;
-        let candidateResult = result + 1;
-
-        if (candidateResult * candidateResult <= n >> shift)
-            result = candidateResult;
-
-        shift -= 2;
-    }
-   
-    return result;
-}
 
 
 export class DTW<SampleType> {
@@ -159,7 +113,7 @@ export class DTW<SampleType> {
 
                 if (condition) {
                     predict = new Match(this.dmin, this.startTime + this.ts - 1, this.startTime + this.te - 1, this.classNumber);
-                    this.Reset();
+                    this.reset();
                 }
             }
         }
@@ -178,7 +132,7 @@ export class DTW<SampleType> {
     }
 
 
-    public Reset() {
+    public reset() {
         this.dmin = 1e10;
 
         for (let i = 1; i <= this.M; i++) {
@@ -190,7 +144,7 @@ export class DTW<SampleType> {
 }
 
 
-export class RC4 {
+export class RC4RandomGenerator {
     // Based on the RC4 random generator. See https://en.wikipedia.org/wiki/RC4
     // Ported from the Multiclass ModelTracker (now called Squares) project (originally in Javascript, now in Typescript).
 
@@ -216,7 +170,7 @@ export class RC4 {
             }
             let j = 0;
             for (let i = 0; i < 256; i++) {
-                j += this.S[i] + (seed as number[])[i % seed.length];
+                j += this.S[i] + (seed as number[]) [i % seed.length];
                 j %= 256;
                 const t = this.S[i]; this.S[i] = this.S[j]; this.S[j] = t;
             }
@@ -271,8 +225,10 @@ export class RC4 {
 }
 
 
+enum Direction { NIL, LEFT, UP, DIAGONAL }
 
-export class DBA<SampleType> {
+
+export class DBA<SampleType> { // DTW Barycenter Average
     /*
     Implements the DBA algorithm in:
 
@@ -285,129 +241,115 @@ export class DBA<SampleType> {
     In 2014 IEEE International Conference on Data Mining (pp. 470-479). IEEE.
     */
 
-    private _currentAverage: SampleType[];
-    private _series: SampleType[][];
-    private _distanceFunction: (a: SampleType, b: SampleType) => number;
-    private _meanFunction: (x: SampleType[]) => SampleType;
-
-    constructor(distanceFunction: (a: SampleType, b: SampleType) => number, meanFunction: (x: SampleType[]) => SampleType) {
-        this._distanceFunction = distanceFunction;
-        this._meanFunction = meanFunction;
-        this._currentAverage = [];
-        this._series = [];
+    constructor(
+        private computeDistance: (a: SampleType, b: SampleType) => number,
+        private computeBarycenter: (x: SampleType[]) => SampleType
+    ) {
     }
 
-    // Compute DTW between two series, return [ cost, [ [ i, j ], ... ] ].
-    public dynamicTimeWarp(a: SampleType[], b: SampleType[]): [number, [number, number][]] {
-        const matrix: [number, number][][] = [];
+
+    private dynamicTimeWarp(a: SampleType[], b: SampleType[]): { distance: number, path: [number, number][] } {
+        const matrix: { cost: number, direction: Direction }[][] = [];
         for (let i = 0; i <= a.length; i++) {
             matrix[i] = [];
             for (let j = 0; j <= b.length; j++) {
-                matrix[i][j] = [1e20, 0];
+                matrix[i][j] = { cost: 1e20, direction: Direction.NIL };
             }
         }
-        matrix[0][0] = [0, 0];
+        matrix[0][0] = { cost: 0, direction: Direction.NIL };
         for (let i = 1; i <= a.length; i++) {
             for (let j = 1; j <= b.length; j++) {
-                const cost = this._distanceFunction(a[i - 1], b[j - 1]);
-                const c1 = matrix[i - 1][j][0];
-                const c2 = matrix[i][j - 1][0];
-                const c3 = matrix[i - 1][j - 1][0];
-                if (c1 <= c2 && c1 <= c3) {
-                    matrix[i][j] = [cost + c1, 1];
-                } else if (c2 <= c1 && c2 <= c3) {
-                    matrix[i][j] = [cost + c2, 2];
+                const cost = this.computeDistance(a[i - 1], b[j - 1]);
+                const leftCost = matrix[i - 1][j].cost;
+                const upCost = matrix[i][j - 1].cost;
+                const diagCost = matrix[i - 1][j - 1].cost;
+                if (leftCost <= upCost && leftCost <= diagCost) {
+                    matrix[i][j] = { cost: cost + leftCost, direction: Direction.LEFT };
+                } else if (upCost <= leftCost && upCost <= diagCost) {
+                    matrix[i][j] = { cost: cost + upCost, direction: Direction.UP };
                 } else {
-                    matrix[i][j] = [cost + c3, 3];
+                    matrix[i][j] = { cost: cost + diagCost, direction: Direction.DIAGONAL };
                 }
             }
         }
-        const result: [number, number][] = [];
+        const path: [number, number][] = [];
         let i = a.length; let j = b.length;
         while (i > 0 && j > 0) {
-            const s = matrix[i][j][1];
-            result.push([i - 1, j - 1]);
-            if (s === 1) { i -= 1; }
-            if (s === 2) { j -= 1; }
-            if (s === 3) { i -= 1; j -= 1; }
-        }
-        result.reverse();
-        return [matrix[a.length][b.length][0], result];
-    }
-
-    // Init the DBA algorithm with series.
-    public init(series: SampleType[][]): void {
-        this._series = series;
-
-        // Initialize the average series naively to the first sereis.
-        // TODO: Implement better initialization methods, see [1] for more detail.
-        this._currentAverage = series[0];
-    }
-
-    // Do one DBA iteration, return the average amount of update (in the distanceFunction).
-    // Usually 5-10 iterations is sufficient to get a good average series.
-    // You can also test if the returned value (the average update distance of this iteration) 
-    // is sufficiently small to determine convergence.
-    public iterate(): number {
-        const s = this._currentAverage;
-        const alignments: SampleType[][] = [];
-        for (let i = 0; i < s.length; i++) { alignments[i] = []; }
-        for (const series of this._series) {
-            const [, match] = this.dynamicTimeWarp(s, series);
-            for (const [i, j] of match) {
-                alignments[i].push(series[j]);
+            path.push([i - 1, j - 1]);
+            switch (matrix[i][j].direction) {
+                case Direction.LEFT: i -= 1; break;
+                case Direction.UP: j -= 1; break;
+                case Direction.DIAGONAL: i -= 1; j -= 1; break;
+                default: break;
             }
         }
-        this._currentAverage = alignments.map(this._meanFunction);
-        return s.map((k, i) =>
-            this._distanceFunction(k, this._currentAverage[i])).reduce((a, b) => a + b, 0) / s.length;
+        return { distance: matrix[a.length][b.length].cost, path: path.reverse() };
     }
 
-    // Get the current average series.
-    public average(): SampleType[] {
-        return this._currentAverage;
-    }
 
-    public computeAverage(series: SampleType[][], iterations: number, TOL: number): SampleType[] {
-        this.init(series);
+    public computeAverageSeries(seriesList: SampleType[][], iterations: number, TOL: number): SampleType[] {
+        // Initialize the average series naively to the first series.
+        // TODO: Implement better initialization methods, see [1] for more detail.
+        let avgSeries = seriesList[0];
         for (let i = 0; i < iterations; i++) {
-            const change = this.iterate();
+            // Do one DBA iteration, return the average amount of update (in the distanceFunction).
+            // Usually 5-10 iterations is sufficient to get a good average series.
+            // You can also test if the returned value (the average update distance of this iteration) 
+            // is sufficiently small to determine convergence.
+            const alignments: SampleType[][] = [];
+            for (let i = 0; i < avgSeries.length; i++) {
+                alignments[i] = [];
+            }
+            for (const series of seriesList) {
+                const path = this.dynamicTimeWarp(avgSeries, series).path;
+                for (const [i, j] of path) {
+                    alignments[i].push(series[j]);
+                }
+            }
+            avgSeries = alignments.map(this.computeBarycenter);
+            const change = avgSeries.map((k, i) =>
+                this.computeDistance(k, avgSeries[i])).reduce((a, b) => a + b, 0) / avgSeries.length;
             if (change < TOL) { break; }
         }
-        return this.average();
+        return avgSeries;
     }
 
-    public computeVariance(series: SampleType[][], center: SampleType[]): number {
+
+    private computeVariance(series: SampleType[][], center: SampleType[]): number {
         if (series.length < 3) { return 0; }
-        const distances = series.map(s => this.dynamicTimeWarp(s, center)[0]);
+        const distances = series.map(s => this.dynamicTimeWarp(s, center).distance);
         let sumsq = 0;
         for (const d of distances) { sumsq += d * d; }
         return Math.sqrt(sumsq / (distances.length - 1));
     }
+
 
     public computeKMeans(
         series: SampleType[][],
         k: number,
         kMeansIterations: number = 10,
         abcIterations: number = 10,
-        dbaTolerance: number = 0.001): { variance: number, mean: SampleType[] }[] {
+        dbaTolerance: number = 0.01
+    ): { variance: number, centroid: SampleType[] }[] {
+
         if (k > series.length) {
-            return series.map(s => ({ variance: 0, mean: s }));
+            return series.map(s => ({ variance: 0, centroid: s }));
         }
         if (k === 1) {
-            const mean = this.computeAverage(series, abcIterations, dbaTolerance);
-            return [{ variance: this.computeVariance(series, mean), mean }];
+            const centroid = this.computeAverageSeries(series, abcIterations, dbaTolerance);
+            return [{ variance: this.computeVariance(series, centroid), centroid }];
         }
-        const random = new RC4('Labeling');
+        const random = new RC4RandomGenerator('Labeling');
         const maxIterations = kMeansIterations;
 
-        const assignSeriesToCenters = (centers: SampleType[][]) => {
+        const assignSeriesToCentroids = (centroids: SampleType[][]) => {
             const classSeries: SampleType[][][] = [];
             for (let i = 0; i < k; i++) { classSeries[i] = []; }
             for (const s of series) {
-                let minD: any = null; let minI: any = null;
+                let minD: number = null;
+                let minI: number = null;
                 for (let i = 0; i < k; i++) {
-                    const d = this.dynamicTimeWarp(centers[i], s)[0];
+                    const d = this.dynamicTimeWarp(centroids[i], s).distance;
                     if (minI === null || d < minD) {
                         minI = i;
                         minD = d;
@@ -418,276 +360,72 @@ export class DBA<SampleType> {
             return classSeries;
         };
 
-        const currentCenters = random.choose(series.length, k).map(i => series[i]);
-        let assigned = assignSeriesToCenters(currentCenters);
+        const centroids = random.choose(series.length, k).map(i => series[i]);
+        let assigned = assignSeriesToCentroids(centroids);
 
         // KMeans iterations.
         for (let iteration = 0; iteration < maxIterations; iteration++) {
             // Update means.
             for (let i = 0; i < k; i++) {
-                currentCenters[i] = this.computeAverage(assigned[i], abcIterations, dbaTolerance);
+                centroids[i] = this.computeAverageSeries(assigned[i], abcIterations, dbaTolerance);
             }
-            assigned = assignSeriesToCenters(currentCenters);
+            assigned = assignSeriesToCentroids(centroids);
         }
-        return currentCenters.map((center, i) => ({
-            variance: this.computeVariance(assigned[i], center),
-            mean: center
-        })
-        );
+        return centroids.map((centroid, i) => ({
+            variance: this.computeVariance(assigned[i], centroid),
+            centroid: centroid
+        }));
     }
 }
 
 
 
-export function average(inp: MotionReading[]): MotionReading {
-    let mean = new MotionReading(0, 0, 0);
 
-    for (let i = 0; i < inp.length; i++) {
-        mean.accelX += inp[i].accelX;
-        mean.accelY += inp[i].accelY;
-        mean.accelZ += inp[i].accelZ;
-    }
-
-    mean.accelX /= inp.length;
-    mean.accelY /= inp.length;
-    mean.accelZ /= inp.length;
-
-    return mean;
-}
-
-
-
-export function roundVecArray(data: MotionReading[]): MotionReading[] {
-    let roundedVec: MotionReading[] = [];
-
-    for (let i = 0; i < data.length; i++)
-        roundedVec.push(new MotionReading(Math.round(data[i].accelX), Math.round(data[i].accelY), Math.round(data[i].accelZ)));
-
-    return roundedVec;
-}
-
-
-
-export function ComputeVarianceVec(protoArray: MotionReading[][]): number {
-    let sum = new MotionReading(0, 0, 0);
-    let sumSquares = new MotionReading(0, 0, 0);
-    let size = 0;
-
-    for (let i = 0; i < protoArray.length; i++) {
-        size += protoArray[i].length;
-
-        for (let j = 0; j < protoArray[i].length; j++) {
-            sum = new MotionReading(sum.accelX + protoArray[i][j].accelX,
-                sum.accelY + protoArray[i][j].accelY,
-                sum.accelZ + protoArray[i][j].accelZ);
-
-            sumSquares = new MotionReading(sumSquares.accelX + Math.pow(protoArray[i][j].accelX, 2),
-                sumSquares.accelY + Math.pow(protoArray[i][j].accelY, 2),
-                sumSquares.accelZ + Math.pow(protoArray[i][j].accelZ, 2));
-        }
-    }
-
-    let variance = new MotionReading(((sumSquares.accelX - (Math.pow(sum.accelX, 2) / size)) / size),
-        ((sumSquares.accelY - (Math.pow(sum.accelY, 2) / size)) / size),
-        ((sumSquares.accelZ - (Math.pow(sum.accelZ, 2) / size)) / size));
-
-    return EuclideanDistance(variance, new MotionReading(0, 0, 0));
-}
-
-
-
-export function findMinimumThreshold(prototypeArray: MotionReading[][],
+export function findMinimumThreshold(
+    prototypeArray: MotionReading[][],
     referencePrototype: MotionReading[],
     avgLen: number,
     distFun: (a: MotionReading, b: MotionReading) => number,
     step: number,
-    maxStep: number): number {
+    maxStep: number
+): number {
     // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
     let threshold = 0;
-    let variance = ComputeVarianceVec(prototypeArray);
-    let condition = true;
+    let variance = MotionReading.variance(prototypeArray);
+    let iterateMore = true;
     let i = 0;
-
-    let testMatch: Match[] = [];
     let predictMatch: Match[] = [];
 
     do {
         // TODO: make it more efficient by adding RESET function and accessors for the threshold 
         let spring = new DTW<MotionReading>(referencePrototype, 0, threshold, 1, avgLen, distFun);
 
-        let time = 0;
-
         for (let k = 0; k < prototypeArray.length; k++) {
             // run some random data
             for (let r = 0; r < 10; r++) {
-                let m = spring.feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
-                if (m.classNum != 0) predictMatch.push(m);
-                time++;
+                let m = spring.feed(MotionReading.random());
+                if (m.gestureClass != 0) predictMatch.push(m);
             }
 
-            let ts = time;
             for (let r = 0; r < prototypeArray[k].length; r++) {
                 let m = spring.feed(prototypeArray[k][r]);
-                if (m.classNum != 0) predictMatch.push(m);
-                time++;
+                if (m.gestureClass != 0) predictMatch.push(m);
             }
-            let te = time;
 
             for (let r = 0; r < 10; r++) {
-                let m = spring.feed(new MotionReading(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
-                if (m.classNum != 0) predictMatch.push(m);
-                time++;
+                let m = spring.feed(MotionReading.random());
+                if (m.gestureClass != 0) predictMatch.push(m);
             }
-
-            testMatch.push(new Match(0, ts, te, 1));
         }
 
         if (predictMatch.length == prototypeArray.length) {
-
-            // for (let k = 0; k < testMatch.length; k++) {
-            // check if te and ts are matching (e.g. pretty close!) as well
-            // }
-
-            condition = false;
+            iterateMore = false;
         }
-
         i++;
-
-        if (i > maxStep) return threshold;
+        if (i > maxStep) { return threshold; }
 
         threshold = i * step * variance;
-    } while (condition);
+    } while (iterateMore);
 
     return threshold;
-}
-
-
-
-export class MultiDTW<SampleType> {
-    private cores: DTW<SampleType>[];
-    private activeCores: boolean[];
-    private thresholds: number[];
-
-    private activeCoresCount: number;
-
-    private timer: number;
-    private waitTime: number;
-    private predictionsArray: Match[];
-    private bestMatch: Match;
-    private bestDist: number;
-
-    constructor(_refPrototypes: SampleType[][], startTime: number, _thresholds: number[], _avgProtoLengths: number[],
-        _distFun: (a: SampleType, b: SampleType) => number) {
-        this.predictionsArray = [];
-        this.cores = [];
-        this.activeCores = [];
-        this.activeCoresCount = 0;
-        this.bestMatch = new Match(0, 0, 0, 0);
-        this.bestDist = 1e8;
-        this.thresholds = _thresholds;
-
-        let minLen = 999;
-        let maxLen = -999;
-
-        for (let i = 0; i < _refPrototypes.length; i++) {
-            this.cores.push(new DTW<SampleType>(_refPrototypes[i], startTime, _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
-            this.activeCores.push(false);
-
-            if (minLen > _avgProtoLengths[i]) minLen = _avgProtoLengths[i];
-            if (maxLen < _avgProtoLengths[i]) maxLen = _avgProtoLengths[i];
-        }
-
-        this.waitTime = Math.abs(Math.round(1.3 * maxLen - 0.7 * minLen));
-    }
-
-    public ActivateCore(classNum: number) {
-        this.activeCores[classNum - 1] = true;
-        this.activeCoresCount++;
-    }
-
-    public DeactivateCore(classNum: number) {
-        this.activeCores[classNum - 1] = false;
-        this.activeCoresCount--;
-    }
-
-    public Feed(xt: SampleType): Match {
-        let prediction = new Match(0, 0, 0, 0);
-
-        for (let i = 0; i < this.cores.length; i++) {
-            if (this.activeCores[i]) {
-                let m = this.cores[i].feed(xt);
-
-                if (m.classNum != 0) {
-                    // we have a report:
-                    // add to predictions array
-                    let isUnique = true;
-
-                    for (let j = 0; j < this.predictionsArray.length; j++)
-                        if (m.classNum == this.predictionsArray[j].classNum)
-                            isUnique = false;
-
-                    if (isUnique) {
-                        this.predictionsArray.push(m);
-
-                        // should we report now? if there are only x active gestures and we have x reports in the array, then yes!
-                        let shouldReport = (this.activeCoresCount == this.predictionsArray.length);
-
-                        // but who should we report?
-                        // which one is the best match?
-                        // do we need to start or update the timer?
-                        if (this.predictionsArray.length == 1) {
-                            // the predictionsArray was empty, so lets start the timer and see if we will have a new match in the next waitTime ticsk!
-                            this.bestMatch = m;
-                            this.bestDist = m.minDist / this.thresholds[i];
-                            this.timer = this.waitTime;
-                        } else {
-                            // the predictionArray is non-empty! and we might find a better match with the addition of this new match
-                            let isUpdated = false;
-
-                            let curDist = m.minDist / this.thresholds[i];
-
-                            if (curDist < this.bestDist) {
-                                this.bestDist = curDist;
-                                this.bestMatch = m;
-
-                                isUpdated = true;
-                            }
-
-                            if (shouldReport) {
-                                // report
-                                prediction = this.bestMatch;
-                                this.predictionsArray = [];
-                                this.timer = 0;
-
-                                this.cores.forEach(core => {
-                                    core.Reset();
-                                });
-                            } else if (isUpdated) {
-                                // update timer (this could only happen when we have 3 or more gestures)
-                                this.timer = this.waitTime;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // tick timers
-        if (this.timer > 0) {
-            this.timer--;
-
-            if (this.timer == 0) {
-                // report:
-                prediction = this.bestMatch;
-                this.predictionsArray = [];
-                this.timer = 0;
-
-                this.cores.forEach(core => {
-                    core.Reset();
-                });
-            }
-        }
-
-        return prediction;
-    }
 }

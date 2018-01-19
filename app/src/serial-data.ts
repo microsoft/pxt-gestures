@@ -1,4 +1,4 @@
-import { MotionReading } from "./gesture-data";
+import { MotionReading } from "./motion";
 
 export class Observable<T> {
     private observers: ((data: T) => void)[] = [];
