@@ -1,155 +1,138 @@
 import { MotionReading, Match } from './motion';
 
 
+const INF = 1e10;
 
-export class DTW<SampleType> {
-    private Y: SampleType[];
-    private epsilon: number;
+/*
+Implement the SPRING algorithm in the paper:
+
+[1] Sakurai, Y., Faloutsos, C., & Yamamuro, M. (2007, April). 
+Stream monitoring under the time warping distance. 
+In 2007 IEEE 23rd International Conference on Data Engineering (pp. 1046-1055). IEEE.
+*/
+
+export class SpringAlgorithm<SampleType> {
+    private querySequence: SampleType[];
+    private threshold: number;
     private classNumber: number;
 
-    private M: number;
+    private queryLen: number;
 
     private distFunction: (a: SampleType, b: SampleType) => number;
 
     private minLen: number;
     private maxLen: number;
 
-    private s: number[];
-    private d: number[];
-    private s1: number[];
-    private d1: number[];
-    private s2: number[];
-    private d2: number[];
+    private start: number[];
+    private dist: number[];
+    private start_prev: number[];
+    private dist_prev: number[];
+    private start_retired: number[];
+    private dist_retired: number[];
 
-    private dmin: number;
+    private dist_min: number;
 
-    private t: number;
-    private te: number;
-    private ts: number;
-
-    public getTick() {
-        return this.t;
-    }
+    private time: number;
+    private startTime: number;
+    private endTime: number;
 
 
-    constructor(_refPrototype: SampleType[], private startTime: number, _threshold: number, _classNum: number, _avgProtoLen: number,
-        _distFun: (a: SampleType, b: SampleType) => number) {
-        this.Y = _refPrototype;
-        this.epsilon = _threshold;
-        this.classNumber = _classNum;
+    constructor(
+        querySequence: SampleType[],
+        private globalStartTime: number,
+        threshold: number,
+        classNum: number,
+        avgProtoLen: number,
+        distFun: (a: SampleType, b: SampleType) => number
+    ) {
+        this.querySequence = querySequence;
+        this.threshold = threshold;
+        this.classNumber = classNum;
+        this.queryLen = querySequence.length;
+        this.distFunction = distFun;
+        this.minLen = avgProtoLen * 7 / 10;
+        this.maxLen = avgProtoLen * 13 / 10;
 
-        this.M = _refPrototype.length;
+        this.dist_prev = Array(this.queryLen + 1).fill(INF); this.dist_prev[0] = 0;
+        this.start_prev = Array(this.queryLen + 1).fill(0);
+        this.dist_retired = Array(this.queryLen + 1).fill(0);
+        this.start_retired = Array(this.queryLen + 1).fill(0);
 
-        this.distFunction = _distFun;
-
-        this.minLen = _avgProtoLen * 7 / 10;
-        this.maxLen = _avgProtoLen * 13 / 10;
-
-        this.d1 = [];
-        this.s1 = [];
-        this.d2 = [];
-        this.s2 = [];
-
-        for (let i = 0; i < this.M + 1; i++) {
-            this.d1.push(0);
-            this.s1.push(0);
-            this.d2.push(0);
-            this.s2.push(0);
-        }
-
-        for (let i = 1; i <= this.M; i++) {
-            this.d1[i] = 1e10;
-            this.s1[i] = 0;
-        }
-
-        this.dmin = 1e10;
-
-        this.t = 0;
-        this.ts = 0;
-        this.te = 0;
+        this.dist_min = INF;
+        this.time = 0;
+        this.startTime = 0;
+        this.endTime = 0;
     }
 
 
     public feed(xt: SampleType): Match {
         let match: Match = undefined;
 
-        let t = this.t + 1;
-        this.d = this.d2;
-        this.s = this.s2;
+        // Reuse these arrays to keep from allocating new arrays during recognition
+        this.dist = this.dist_retired;
+        this.start = this.start_retired;
 
-        this.d[0] = 0;
-        this.s[0] = t;
+        this.dist[0] = 0;
+        this.start[0] = this.time;
 
-        // update M distances (d[] based on dp[]) and M starting points (s[] based on sp[]):
-        for (let i = 1; i <= this.M; i++) {
-            let dist = this.distFunction(this.Y[i - 1], xt);
-            let di_minus1 = this.d[i - 1];
-            let dip = this.d1[i];
-            let dip_minus1 = this.d1[i - 1];
+        for (let i = 1; i <= this.queryLen; i++) {
+            const dist = this.distFunction(this.querySequence[i - 1], xt);
 
-            // compute dbest and use that to compute s[i]
-            if (di_minus1 <= dip && di_minus1 <= dip_minus1) {
-                this.d[i] = dist + di_minus1;
-                this.s[i] = this.s[i - 1];
-            } else if (dip <= di_minus1 && dip <= dip_minus1) {
-                this.d[i] = dist + dip;
-                this.s[i] = this.s1[i];
+            if (this.dist[i - 1] <= this.dist_prev[i] && this.dist[i - 1] <= this.dist_prev[i - 1]) {
+                this.dist[i] = dist + this.dist[i - 1];
+                this.start[i] = this.start[i - 1];
+            } else if (this.dist_prev[i] <= this.dist[i - 1] && this.dist_prev[i] <= this.dist_prev[i - 1]) {
+                this.dist[i] = dist + this.dist_prev[i];
+                this.start[i] = this.start_prev[i];
             } else {
-                this.d[i] = dist + dip_minus1;
-                this.s[i] = this.s1[i - 1];
+                this.dist[i] = dist + this.dist_prev[i - 1];
+                this.start[i] = this.start_prev[i - 1];
             }
         }
 
-        if (this.dmin <= this.epsilon) {
-            let matched = true;
-            let matchLength = this.te - this.ts;
+        if (this.dist_min <= this.threshold) {
+            let matchLength = this.endTime - this.startTime;
 
-            if (matchLength > this.minLen && matchLength < this.maxLen) {
+            if (this.minLen < matchLength && matchLength < this.maxLen &&
+                forAll(0, this.queryLen, i => this.dist[i] >= this.dist_min && this.start[i] > this.endTime)) {
 
-                for (let i = 0; i <= this.M; i++) {
-                    if (this.d[i] < this.dmin && this.s[i] <= this.te) {
-                        matched = false;
-                        break;
+                match = new Match(this.dist_min,
+                    this.globalStartTime + this.startTime - 1,
+                    this.globalStartTime + this.endTime - 1,
+                    this.classNumber);
+
+                this.dist_min = INF;
+
+                for (let i = 1; i <= this.queryLen; i++) {
+                    if (this.start[i] <= this.endTime) {
+                        this.dist[i] = INF;
                     }
                 }
-
-                if (matched) {
-                    match = new Match(this.dmin,
-                        this.startTime + this.ts - 1,
-                        this.startTime + this.te - 1,
-                        this.classNumber);
-                    this.reset();
-                }
             }
         }
 
-        if (this.d[this.M] <= this.epsilon && this.d[this.M] < this.dmin) {
-            this.dmin = this.d[this.M];
-            this.ts = this.s[this.M];
-            this.te = t;
+        if (this.dist[this.queryLen] <= this.threshold && this.dist[this.queryLen] < this.dist_min) {
+            this.dist_min = this.dist[this.queryLen];
+            this.startTime = this.start[this.queryLen];
+            this.endTime = this.time;
         }
 
-        this.d2 = this.d1; this.d1 = this.d;
-        this.s2 = this.s1; this.s1 = this.s;
-        this.t = t;
+        // We can "retire" the prev arrays for future use.
+        this.dist_retired = this.dist_prev;
+        this.start_retired = this.start_prev;
+
+        this.dist_prev = this.dist;
+        this.start_prev = this.start;
+        this.time++;
 
         return match;
     }
+
 
     public findMatches(data: SampleType[]) {
         return data.map(d => this.feed(d)).filter(m => m);
     }
 
-
-    public reset() {
-        this.dmin = 1e10;
-
-        for (let i = 1; i <= this.M; i++) {
-            if (this.s[i] <= this.te) {
-                this.d[i] = 1e10;
-            }
-        }
-    }
 }
 
 
@@ -179,7 +162,7 @@ export class RC4RandomGenerator {
             }
             let j = 0;
             for (let i = 0; i < 256; i++) {
-                j += this.S[i] + (seed as number[]) [i % seed.length];
+                j += this.S[i] + (seed as number[])[i % seed.length];
                 j %= 256;
                 const t = this.S[i]; this.S[i] = this.S[j]; this.S[j] = t;
             }
@@ -410,7 +393,7 @@ export function findThreshold(
             .concat(MotionReading.randomMotion(10));
 
     do {
-        let spring = new DTW<MotionReading>(motionPrototype, 0, threshold, 1, avgMotionLen, computeDistance);
+        let spring = new SpringAlgorithm<MotionReading>(motionPrototype, 0, threshold, 1, avgMotionLen, computeDistance);
 
         const matchedAll = motions.every(motion =>
             spring.findMatches(testSignal(motion)).length > 0);
@@ -425,4 +408,12 @@ export function findThreshold(
     } while (iterateMore);
 
     return threshold;
+}
+
+function forAll(min: number, max: number, pred: (i: number) => boolean): boolean {
+    let okay = true;
+    for (let i = min; okay && i <= max; i++)
+        if (!pred(i))
+            okay = false;
+    return okay;
 }

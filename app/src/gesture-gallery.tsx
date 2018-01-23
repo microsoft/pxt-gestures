@@ -40,23 +40,14 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                         {
                             gestureStore.gestures.map(gesture =>
                                 <div
-                                    className="ui card"
+                                    className="ui link card"
                                     key={gesture.gestureID}
                                 >
                                     <div className="content">
-                                        <a
-                                            className="header left floated gesture-name-gallery"
-                                            onClick={() => { this.props.editGesture(gesture.gestureID) }}
-                                        >
-                                            {gesture.name}
-                                        </a>
-
                                         <button
-                                            onClick={e => {
-                                                ($('#delete-gesture') as any).modal('show');
-                                                e.stopPropagation();
-                                            }}
                                             className="ui icon button clear right floated aligned top"
+                                            tabIndex={-1}
+                                            onClick={() => ($('#delete-gesture') as any).modal('show')}
                                         >
                                             <i className="trash icon" />
                                         </button>
@@ -70,19 +61,27 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                                                 <div className="ui button ok" onClick={() => this.deleteGesture(gesture)}>Yes</div>
                                             </div>
                                         </div>
+
+                                        <div className="content"
+                                            onClick={() => { this.props.editGesture(gesture.gestureID) }}
+                                        >
+                                            <div className="header gesture-name-gallery">
+                                                {gesture.name}
+                                            </div>
+
+                                            <GestureExample
+                                                key={gesture.gestureID}
+                                                editable={false}
+                                                gesture={gesture}
+                                                example={gesture.displayGesture}
+                                                dx={7}
+                                                graphHeight={70}
+                                                maxVal={2450}
+                                                style={{ margin: "15px 15px 15px 0" }}
+                                            />
+                                        </div>
+
                                     </div>
-
-                                    <GestureExample
-                                        key={gesture.gestureID}
-                                        editable={false}
-                                        gesture={gesture}
-                                        example={gesture.displayGesture}
-                                        dx={7}
-                                        graphHeight={70}
-                                        maxVal={2450}
-                                        style={{ margin: "15px 15px 15px 0" }}
-                                    />
-
                                 </div>
                             )
                         }

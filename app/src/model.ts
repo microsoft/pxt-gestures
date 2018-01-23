@@ -1,4 +1,4 @@
-import { findThreshold, DTW, DBA } from './algorithms';
+import { findThreshold, SpringAlgorithm, DBA } from './algorithms';
 import { MotionReading, Match, GestureExampleData } from './motion';
 
 
@@ -7,9 +7,9 @@ export class SingleDTWCore {
     private classNumber: number;
     private gestureName: string;
     private description: string;
-    private dtw: DTW<MotionReading>;
+    private dtw: SpringAlgorithm<MotionReading>;
     private dba: DBA<MotionReading>;
-    private averageMotion: MotionReading[];
+    private prototypeMotion: MotionReading[];
     public threshold: number;
     private running: boolean;
     private avgMotionLength: number;
@@ -25,10 +25,6 @@ export class SingleDTWCore {
 
     public enableRunning() {
         this.running = true;
-    }
-
-    public getTick() {
-        return this.dtw.getTick();
     }
 
     constructor(classNum: number, gestureName: string) {
@@ -56,7 +52,7 @@ export class SingleDTWCore {
             this.running = false;
             this.avgMotionLength = 0;
             this.threshold = 0;
-            this.averageMotion = [];
+            this.prototypeMotion = [];
             return;
         }
 
@@ -73,17 +69,17 @@ export class SingleDTWCore {
         }
 
         this.avgMotionLength = Math.round(sumSeriesLengths / motionExamples.length);
-        this.averageMotion = this.dba.computeAverageSeries(trainData, 10, 0.01);
-        this.threshold = findThreshold(thresholdData, this.averageMotion, this.avgMotionLength, MotionReading.euclideanDistanceFast);
-        this.dtw = new DTW<MotionReading>(this.averageMotion, startTime, this.threshold, this.classNumber, this.avgMotionLength, MotionReading.euclideanDistanceFast);
+        this.prototypeMotion = this.dba.computeAverageSeries(trainData, 10, 0.01);
+        this.threshold = findThreshold(thresholdData, this.prototypeMotion, this.avgMotionLength, MotionReading.euclideanDistanceFast);
+        this.dtw = new SpringAlgorithm<MotionReading>(this.prototypeMotion, startTime, this.threshold, this.classNumber, this.avgMotionLength, MotionReading.euclideanDistanceFast);
         this.running = true;
     }
 
 
     public get prototype() {
         let mainSample = new GestureExampleData();
-        mainSample.motion = this.averageMotion;
-        mainSample.cropEndIndex = this.averageMotion.length - 1;
+        mainSample.motion = this.prototypeMotion;
+        mainSample.cropEndIndex = this.prototypeMotion.length - 1;
         mainSample.cropStartIndex = 0;
         mainSample.startTime = 0;
         mainSample.endTime = 0;
@@ -115,7 +111,7 @@ ${generatedCodeBlocks.join('\n')}
         // TODO: make sure that gesture names are unique (within a program) => otherwise ask the user to change/delete or merge their data.
         // TODO: this will definitely break if the user enters numbers or ...
         // FIX: if we merge all of the gestures into a single gesture block with a dropdown to select from, then it will be fixed.
-        let functionName = this.gestureName.replace(' ', '');
+        let functionName = this.gestureName.replace(' ', '_');
         functionName = functionName.charAt(0).toUpperCase().concat(functionName.substr(1, functionName.length - 1));
 
         let event_src_id_varName = `MY_EVENT_SRC${uniqueId}`;
@@ -146,7 +142,7 @@ ${generatedCodeBlocks.join('\n')}
         control.runInBackground(() => {
             const threshold = ${this.threshold};
             const avgLength = ${this.avgMotionLength};
-            const refPrototype = ${this.vecArrayToString(this.averageMotion)};
+            const refPrototype = ${this.vecArrayToString(this.prototypeMotion)};
             const spring = new SpringAlgorithm(refPrototype, threshold, avgLength);
 
             while (true) {
