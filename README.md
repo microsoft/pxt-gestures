@@ -35,7 +35,7 @@ The ``app`` folder contains the React App that gets loaded in the editor IFrame 
 
 ## MakeCode
 
-* for PXT/adafruit
+* for PXT/codal
 
 ## Contributing
 
