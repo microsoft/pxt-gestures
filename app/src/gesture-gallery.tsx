@@ -62,7 +62,8 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                                             </div>
                                         </div>
 
-                                        <div className="content"
+                                        <div
+                                            className="content"
                                             onClick={() => { this.props.editGesture(gesture.gestureID) }}
                                         >
                                             <div className="header gesture-name-gallery">
