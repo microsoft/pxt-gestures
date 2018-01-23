@@ -94,7 +94,8 @@ export class SpringAlgorithm<SampleType> {
             let matchLength = this.endTime - this.startTime;
 
             if (this.minLen < matchLength && matchLength < this.maxLen &&
-                forAll(0, this.queryLen, i => this.dist[i] >= this.dist_min && this.start[i] > this.endTime)) {
+                forAll(0, this.queryLen, i =>
+                    this.dist[i] >= this.dist_min || this.start[i] > this.endTime)) {
 
                 match = new Match(this.dist_min,
                     this.globalStartTime + this.startTime - 1,
