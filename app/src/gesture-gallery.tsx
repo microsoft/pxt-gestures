@@ -47,11 +47,11 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                                         <button
                                             className="ui icon button clear right floated aligned top"
                                             tabIndex={-1}
-                                            onClick={() => ($('#delete-gesture') as any).modal('show')}
+                                            onClick={() => ($('#delete-gesture-' + gesture.gestureID) as any).modal('show')}
                                         >
                                             <i className="trash icon" />
                                         </button>
-                                        <div className="ui mini modal" id="delete-gesture">
+                                        <div className="ui mini modal" id={"delete-gesture-" + gesture.gestureID} >
                                             <div className="header">Delete Gesture</div>
                                             <div className="content">
                                                 <p> Are you sure you want to delete the gesture "{gesture.name}"?</p>
