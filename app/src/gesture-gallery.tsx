@@ -1,8 +1,9 @@
 import * as React from "react";
 import { gestureStore } from "./gesture-store";
-import { GestureExample } from "./gesture-example";
 import { observer } from "mobx-react";
-import { Gesture } from "./motion";
+import { MotionReading } from "./motion";
+import { observable } from "mobx";
+import { OrientedDevice } from "./orientation";
 
 
 
@@ -12,16 +13,54 @@ export interface GestureGalleryProps {
 }
 
 
+interface GestureAnimationProps {
+    motion: MotionReading[];
+}
+
 @observer
-export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
-    constructor(props: GestureGalleryProps) {
+class GestureAnimation extends React.Component<GestureAnimationProps> {
+    private index = 0;
+    private timer: number;
+    @observable private orientation: MotionReading;
+
+    constructor(props: GestureAnimationProps) {
         super(props);
-        this.deleteGesture = this.deleteGesture.bind(this);
+        this.orientation = this.props.motion[0];
+        this.tick = this.tick.bind(this);
+        this.timer = setInterval(this.tick, 100);
     }
 
-    private deleteGesture(gesture: Gesture) {
-        gestureStore.deleteGesture(gesture);
+    public tick() {
+        this.index = (this.index + 1) % this.props.motion.length;
+        this.orientation = this.props.motion[this.index];
     }
+
+    public cancel() { clearInterval(this.timer); }
+
+    public render() {
+        return (
+            <div style={{ width: 150, height: 150, position: 'relative', margin: 15 }}>
+                <OrientedDevice
+                    width={150}
+                    height={150}
+                    left={0}
+                    orientation={this.orientation}
+                />
+            </div>
+
+        );
+    }
+}
+
+
+
+@observer
+export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
+
+    constructor(props: GestureGalleryProps) {
+        super(props);
+    }
+
 
     public render() {
         return (
@@ -38,7 +77,7 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                 <div className="ui link row" >
                     <div className="ui cards">
                         {
-                            gestureStore.gestures.map(gesture =>
+                            gestureStore.gestures.map((gesture, i) =>
                                 <div
                                     className="gesture-card ui link card"
                                     key={gesture.gestureID}
@@ -58,7 +97,7 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                                             </div>
                                             <div className="actions">
                                                 <div className="ui button cancel">No</div>
-                                                <div className="ui button ok" onClick={() => this.deleteGesture(gesture)}>Yes</div>
+                                                <div className="ui button ok" onClick={() => gestureStore.deleteGesture(gesture)}>Yes</div>
                                             </div>
                                         </div>
 
@@ -70,16 +109,7 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                                                 {gesture.name}
                                             </div>
 
-                                            <GestureExample
-                                                key={gesture.gestureID}
-                                                editable={false}
-                                                gesture={gesture}
-                                                example={gesture.displayGesture}
-                                                dx={7}
-                                                graphHeight={70}
-                                                maxVal={2450}
-                                                style={{ margin: "15px 15px 15px 0" }}
-                                            />
+                                            <GestureAnimation motion={gesture.displayGesture.motion} />
                                         </div>
 
                                     </div>

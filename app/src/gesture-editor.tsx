@@ -56,7 +56,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
 
         return (
             <div className="ui " id="gesture-editor">
-            
+
                 <div className="ui text menu">
                     <button className="ui button icon huge clear" id="back-btn" onClick={this.props.backToMain}>
                         <i className="icon chevron left large"></i>
@@ -97,7 +97,7 @@ export class GestureEditor extends React.Component<GestureEditorProps, {}> {
                                     </div>
                                     <div className="ui row" style={{ height: 200 }}>
 
-                                        <OrientedDevice width={200} height={200} />
+                                        <OrientedDevice width={200} height={200} left={500} orientation={gestureStore.currentOrientation} />
 
                                         <MotionTimeline
                                             readings={gestureStore.readings}
