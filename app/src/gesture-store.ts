@@ -99,6 +99,7 @@ export class GestureStore {
 
     @action public setCurrentGesture(gestureId: number): void {
         this.curGestureIndex = this.gestures.findIndex(g => g.gestureID === gestureId);
+        this.currentModel.update(this.gestures[this.curGestureIndex].getCroppedData(), this.latestTimestamp);   
     }
 
 
@@ -320,7 +321,10 @@ function parseString(strBuf: string): any {
 
     for (let i = 0; i < strBufArray.length; i++) {
         if (strBufArray[i] == "A") {
-            result.accVec = new MotionReading(parseInt(strBufArray[i + 1]), parseInt(strBufArray[i + 2]), parseInt(strBufArray[i + 3]));
+            result.accVec = new MotionReading(
+                parseInt(strBufArray[i + 1]), 
+                parseInt(strBufArray[i + 2]), 
+                parseInt(strBufArray[i + 3]));
             result.acc = true;
 
             i += 3;

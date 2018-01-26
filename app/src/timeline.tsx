@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getStyleForReading } from "./orientation";
+import { getTransformForMotionReading } from "./orientation";
 import { observer } from "mobx-react";
 import { MotionReading } from "./motion";
 
@@ -38,13 +38,14 @@ export class MotionTimeline extends React.Component<MotionTimelineProps, {}> {
             <div style={{ width: this.props.width, height: this.props.height, top: 0, left: 0, position: 'absolute' }}>
                 {
                     this.props.readings.map((reading, readingIndex) => {
-                        const style = getStyleForReading(reading);
+                        const isMatch = this.props.isMatch(readingIndex);
+                        const hide = !isMatch && this.props.hideStillMotion && delta[readingIndex] < THRESHOLD;
+
+                        const style = getTransformForMotionReading(reading);
                         style.position = 'absolute';
                         style.left = readingIndex * spacing;
                         style.top = 0;
-                        const isMatch = this.props.isMatch(readingIndex);
-                        const hide = this.props.hideStillMotion && delta[readingIndex] < THRESHOLD && !isMatch;
-                        style.opacity = hide  ? 0 : readingIndex / this.props.numReadingsToShow;
+                        style.opacity = hide ? 0 : readingIndex / this.props.numReadingsToShow;
                         return (
                             <svg
                                 key={readingIndex}

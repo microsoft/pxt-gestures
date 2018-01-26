@@ -64,9 +64,16 @@ export class Gesture {
     static parseJSONGesture(importedSample: any): GestureExampleData {
         let sample = new GestureExampleData();
 
-        for (let k = 0; k < importedSample.motion.length; k++) {
-            let vec = importedSample.motion[k];
-            sample.motion.push(new MotionReading(vec.accelX, vec.accelY, vec.accelZ));
+        if (importedSample.motion) {
+            for (let k = 0; k < importedSample.motion.length; k++) {
+                let vec = importedSample.motion[k];
+                sample.motion.push(new MotionReading(vec.accelX, vec.accelY, vec.accelZ));
+            }
+        } else {
+            for (let k = 0; k < importedSample.rawData.length; k++) {
+                let vec = importedSample.rawData[k];
+                sample.motion.push(new MotionReading(vec.X, vec.Y, vec.Z));
+            }            
         }
 
         sample.videoLink = importedSample.videoLink;

@@ -221,7 +221,7 @@ export class RC4RandomGenerator {
 enum Direction { NIL, LEFT, UP, DIAGONAL }
 
 
-export class DBA<SampleType> { // DTW Barycenter Average
+export class TimeSeriesAverager<SampleType> { // DBA (DTW Barycenter Average)
     /*
     Implements the DBA algorithm in:
 

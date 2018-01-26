@@ -6,10 +6,10 @@ import { MotionReading } from "./motion";
 
 const HALF_PI = Math.PI * 0.5;
 
-export function getStyleForReading(reading: MotionReading): React.CSSProperties {
+export function getTransformForMotionReading(reading: MotionReading): React.CSSProperties {
     return {
         transformStyle: "preserve-3d",
-        transform: "rotateY(" + (reading.roll - Math.PI) + "rad) rotateX(" + reading.pitch + "rad)",
+        transform: "rotateY(" + (reading.roll + Math.PI) + "rad) rotateX(" + reading.pitch + "rad)",
         padding: 0
     };
 }
@@ -33,7 +33,7 @@ export class OrientedDevice extends React.Component<OrientedDeviceProps, {}> {
                     src={imgSource}
                     width={this.props.width}
                     height={this.props.height}
-                    style={getStyleForReading(orientation)}
+                    style={getTransformForMotionReading(orientation)}
                 />
             </div>
         );

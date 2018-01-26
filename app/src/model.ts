@@ -1,4 +1,4 @@
-import { findThreshold, SpringAlgorithm, DBA } from './algorithms';
+import { findThreshold, SpringAlgorithm, TimeSeriesAverager } from './algorithms';
 import { MotionReading, Match, GestureExampleData } from './motion';
 
 
@@ -8,7 +8,7 @@ export class SingleDTWCore {
     private gestureName: string;
     private description: string;
     private dtw: SpringAlgorithm<MotionReading>;
-    private dba: DBA<MotionReading>;
+    private motionAverager: TimeSeriesAverager<MotionReading>;
     private prototypeMotion: MotionReading[];
     public threshold: number;
     private running: boolean;
@@ -29,7 +29,7 @@ export class SingleDTWCore {
 
     constructor(classNum: number, gestureName: string) {
         this.classNumber = classNum;
-        this.dba = new DBA<MotionReading>(MotionReading.euclideanDistanceFast, MotionReading.mean);
+        this.motionAverager = new TimeSeriesAverager<MotionReading>(MotionReading.euclideanDistanceFast, MotionReading.mean);
         this.running = false;
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
@@ -69,7 +69,7 @@ export class SingleDTWCore {
         }
 
         this.avgMotionLength = Math.round(sumSeriesLengths / motionExamples.length);
-        this.prototypeMotion = this.dba.computeAverageSeries(trainData, 10, 0.01);
+        this.prototypeMotion = this.motionAverager.computeAverageSeries(trainData, 10, 0.01);
         this.threshold = findThreshold(thresholdData, this.prototypeMotion, this.avgMotionLength, MotionReading.euclideanDistanceFast);
         this.dtw = new SpringAlgorithm<MotionReading>(this.prototypeMotion, startTime, this.threshold, this.classNumber, this.avgMotionLength, MotionReading.euclideanDistanceFast);
         this.running = true;

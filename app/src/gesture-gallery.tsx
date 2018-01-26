@@ -40,7 +40,7 @@ export class GestureGallery extends React.Component<GestureGalleryProps, {}> {
                         {
                             gestureStore.gestures.map(gesture =>
                                 <div
-                                    className="ui link card"
+                                    className="gesture-card ui link card"
                                     key={gesture.gestureID}
                                 >
                                     <div className="content">
