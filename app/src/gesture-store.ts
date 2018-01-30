@@ -34,6 +34,8 @@ export class GestureStore {
     private extId: string;
     private curGestureIndex: number = 0;
 
+    public saveBlocks = debounce(() => this.saveBlocksNow(), 2000);
+
 
     constructor() {
         this.extId = window.location.hash.substr(1);
@@ -222,7 +224,7 @@ export class GestureStore {
      * will generate the code blocks for each running DTW model and will rewrite 
      * the contents of the custom.ts file with 
      */
-    public saveBlocks() {
+    private saveBlocksNow() {
         if (!this.hasBeenModified) return;
         let cloneData = this.gestures.slice();
 
@@ -241,7 +243,7 @@ export class GestureStore {
     markDirty() {
         if (!this.hasBeenModified) {
             this.hasBeenModified = true;
-            debounce(() => this.saveBlocks(), 2000);
+            this.saveBlocks();
         }
     }
 
@@ -283,6 +285,7 @@ export class GestureStore {
         if (index >= 0) {
             this.gestures.splice(index, 1);
             this.models.splice(index, 1);
+            this.markDirty();
         }
     }
 
