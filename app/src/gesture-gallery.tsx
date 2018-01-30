@@ -20,22 +20,29 @@ interface GestureAnimationProps {
 @observer
 class GestureAnimation extends React.Component<GestureAnimationProps> {
     private index = 0;
-    private timer: number;
     @observable private orientation: MotionReading;
+    private pause = 0;
 
     constructor(props: GestureAnimationProps) {
         super(props);
         this.orientation = this.props.motion[0];
         this.tick = this.tick.bind(this);
-        this.timer = setInterval(this.tick, 100);
+        setInterval(this.tick, 100);
     }
 
     public tick() {
-        this.index = (this.index + 1) % this.props.motion.length;
-        this.orientation = this.props.motion[this.index];
+        if (this.index === this.props.motion.length) {
+            if (this.pause === 5) {
+                this.pause = 0;
+                this.index = 0;
+            } else {
+                this.pause++;
+            }
+        } else {
+            this.orientation = this.props.motion[this.index];
+            this.index++;
+        }
     }
-
-    public cancel() { clearInterval(this.timer); }
 
     public render() {
         return (
