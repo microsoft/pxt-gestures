@@ -13,7 +13,8 @@
     "pxt-core": "^3.4.5",
     "react": "^16.1.1",
     "react-dom": "^16.1.1",
-    "react-scripts-ts": "2.8.0"
+    "react-scripts-ts": "2.8.0",
+    "typescript": "^2.7.0"
   },
   "scripts": {
     "predeploy": "npm run build",
